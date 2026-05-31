@@ -15,10 +15,11 @@ Phase 1 through Phase 4 foundations are in place:
 - Hook-only PT/YT token contracts
 - Phase 1 pool init, deposit minting, and maturity redemption
 - Phase 2 IL math, premium quoting, insurance reserve ledger, and YT fee accounting
+- Rolling volatility oracle for premium updates
 - Phase 3 router and lens periphery contracts
 - Phase 4 Next.js + Wagmi frontend scaffold with dashboard, deposit modal, and position detail routes
 - Phase 5 docs, audit notes, gas checklist, subgraph scaffold, demo script, and pitch deck source
-- Unit tests for token permissions, deposit/redeem lifecycle, IL math, vault payouts, fee accrual, router, and lens
+- Unit/integration test scaffolds for token permissions, deposit/redeem lifecycle, IL math, vault payouts, fee accrual, router, lens, full flow, fee routing, and IL coverage
 
 ## Repository Structure
 
@@ -41,7 +42,8 @@ Phase 1 through Phase 4 foundations are in place:
 |   |-- AUDIT_NOTES.md
 |   |-- GAS_REPORT.md
 |   |-- MECHANISM.md
-|   `-- SECURITY_CHECKLIST.md
+|   |-- SECURITY_CHECKLIST.md
+|   `-- UNISWAP_V4_MIGRATION.md
 |-- demo/
 |   |-- DEMO_SCRIPT.md
 |   `-- PITCH_DECK.md
@@ -55,6 +57,7 @@ Phase 1 through Phase 4 foundations are in place:
     |-- src/
     |   |-- StructuredYieldHook.sol
     |   |-- accounting/YieldAccounting.sol
+    |   |-- accounting/VolatilityOracle.sol
     |   |-- math/FixedPointMath.sol
     |   |-- math/ILMath.sol
     |   |-- math/PremiumMath.sol
@@ -64,6 +67,9 @@ Phase 1 through Phase 4 foundations are in place:
     |   |-- tokens/PTToken.sol
     |   |-- tokens/YTToken.sol
     |   `-- vault/InsuranceVault.sol
+    |-- script/
+    |   |-- CreatePool.s.sol
+    |   `-- Deploy.s.sol
     `-- test/unit/
         |-- ILMath.t.sol
         |-- InsuranceVault.t.sol
@@ -104,6 +110,10 @@ Minimal ERC-20 style tokens with hook-only mint/burn permissions.
 ### `ILMath`, `PremiumMath`, `InsuranceVault`, and `YieldAccounting`
 
 Phase 2 support modules for impermanent-loss quotes, premium estimates, reserve-capped payouts, and YT fee accrual.
+
+### `VolatilityOracle`
+
+Rolling 50-observation volatility estimator used to update premium inputs from sqrt-price movement.
 
 ## Frontend
 
@@ -149,7 +159,14 @@ cd contracts
 forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
 ```
 
-The current deployment script deploys the dependency-light scaffold. Final testnet deployment still requires Foundry plus Uniswap V4 dependency integration.
+The current deployment scripts deploy and initialize the dependency-light scaffold. Final testnet deployment still requires Foundry plus Uniswap V4 dependency integration.
+
+Create a demo pool after deploying:
+
+```bash
+cd contracts
+STRUCTURED_YIELD_HOOK=0x... forge script script/CreatePool.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+```
 
 ## Demo
 
@@ -193,13 +210,16 @@ forge test --match-contract InsuranceVaultTest -vvv
 forge test --match-contract YieldAccountingTest -vvv
 forge test --match-contract SYRouterTest -vvv
 forge test --match-contract SYLensTest -vvv
+forge test --match-contract VolatilityOracleTest -vvv
+forge test --match-contract FullFlowTest -vvv
+forge test --match-contract ILCoverageTest -vvv
+forge test --match-contract FeeRoutingTest -vvv
 ```
 
 ## Roadmap
 
 - Install Foundry and Slither locally.
-- Adapt `StructuredYieldHook` to real Uniswap V4 `BaseHook` callbacks.
-- Add testnet deployment scripts.
+- Adapt `StructuredYieldHook` to real Uniswap V4 `BaseHook` callbacks using `docs/UNISWAP_V4_MIGRATION.md`.
 - Run Slither and gas snapshots.
 - Deploy to Base Sepolia or Unichain testnet.
 

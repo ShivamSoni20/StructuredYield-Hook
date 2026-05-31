@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {PTToken} from "./tokens/PTToken.sol";
 import {YTToken} from "./tokens/YTToken.sol";
+import {VolatilityOracle} from "./accounting/VolatilityOracle.sol";
 import {YieldAccounting} from "./accounting/YieldAccounting.sol";
 import {ILMath} from "./math/ILMath.sol";
 import {PremiumMath} from "./math/PremiumMath.sol";
@@ -35,6 +36,7 @@ contract StructuredYieldHook {
     }
 
     InsuranceVault public immutable insuranceVault;
+    VolatilityOracle public immutable volatilityOracle;
     YieldAccounting public immutable yieldAccounting;
 
     mapping(bytes32 => PoolConfig) public pools;
@@ -56,6 +58,7 @@ contract StructuredYieldHook {
 
     constructor() {
         insuranceVault = new InsuranceVault(address(this));
+        volatilityOracle = new VolatilityOracle(address(this));
         yieldAccounting = new YieldAccounting(address(this));
     }
 
@@ -116,8 +119,15 @@ contract StructuredYieldHook {
     }
 
     function afterSwap(bytes32 poolId, uint256 feeAmount) external returns (bytes4) {
+        return afterSwap(poolId, feeAmount, 0);
+    }
+
+    function afterSwap(bytes32 poolId, uint256 feeAmount, uint160 currentSqrtPrice) public returns (bytes4) {
         PoolConfig storage pool = pools[poolId];
         if (!pool.initialized) revert PoolNotInitialized();
+        if (currentSqrtPrice != 0) {
+            pool.volatilityBps = volatilityOracle.observe(poolId, currentSqrtPrice);
+        }
         if (feeAmount == 0) return this.afterSwap.selector;
 
         uint256 ytFees = (feeAmount * YT_FEE_SHARE_BPS) / BPS;
