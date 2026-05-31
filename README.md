@@ -17,6 +17,7 @@ Phase 1 through Phase 4 foundations are in place:
 - Phase 2 IL math, premium quoting, insurance reserve ledger, and YT fee accounting
 - Phase 3 router and lens periphery contracts
 - Phase 4 Next.js + Wagmi frontend scaffold with dashboard, deposit modal, and position detail routes
+- Phase 5 docs, audit notes, gas checklist, subgraph scaffold, demo script, and pitch deck source
 - Unit tests for token permissions, deposit/redeem lifecycle, IL math, vault payouts, fee accrual, router, and lens
 
 ## Repository Structure
@@ -35,6 +36,19 @@ Phase 1 through Phase 4 foundations are in place:
 |   |-- components/
 |   |-- hooks/
 |   `-- lib/
+|-- docs/
+|   |-- ARCHITECTURE.md
+|   |-- AUDIT_NOTES.md
+|   |-- GAS_REPORT.md
+|   |-- MECHANISM.md
+|   `-- SECURITY_CHECKLIST.md
+|-- demo/
+|   |-- DEMO_SCRIPT.md
+|   `-- PITCH_DECK.md
+|-- subgraph/
+|   |-- schema.graphql
+|   |-- subgraph.yaml
+|   `-- src/mappings.ts
 `-- contracts/
     |-- foundry.toml
     |-- remappings.txt
@@ -113,6 +127,52 @@ NEXT_PUBLIC_SY_LENS=0x...
 
 Without deployed addresses, the UI falls back to demo data so the dashboard remains explorable.
 
+The root `index.html` is the canonical static UI mockup. The Next app serves the same UI through `frontend/public/structuredyield.html`.
+
+## Local Deployment
+
+The repository is not yet adapted to real Uniswap V4 `BaseHook` imports, so local deployment currently targets the dependency-light contract scaffold.
+
+After installing Foundry:
+
+```bash
+cd contracts
+forge build
+forge test -vvv
+```
+
+Recommended local flow:
+
+```bash
+anvil
+cd contracts
+forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+```
+
+The current deployment script deploys the dependency-light scaffold. Final testnet deployment still requires Foundry plus Uniswap V4 dependency integration.
+
+## Demo
+
+Run the UI:
+
+```bash
+cd frontend
+npm install
+npm run build
+npm run start -- -p 3000
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+Demo assets:
+
+- `demo/DEMO_SCRIPT.md`
+- `demo/PITCH_DECK.md`
+
 ## Contract Tests
 
 Install Foundry, then run:
@@ -137,9 +197,12 @@ forge test --match-contract SYLensTest -vvv
 
 ## Roadmap
 
-- **Phase 5**: audit pass, gas benchmarks, demo polish
+- Install Foundry and Slither locally.
+- Adapt `StructuredYieldHook` to real Uniswap V4 `BaseHook` callbacks.
+- Add testnet deployment scripts.
+- Run Slither and gas snapshots.
+- Deploy to Base Sepolia or Unichain testnet.
 
 ## Notes
 
 The current hook remains dependency-light so the product mechanics can be developed before pulling in full Uniswap V4 packages. The next contract milestone is adapting `StructuredYieldHook.sol` to real `BaseHook` callback signatures after installing Foundry and Uniswap V4 dependencies.
-

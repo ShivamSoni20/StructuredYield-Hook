@@ -1,0 +1,35 @@
+type Position @entity(immutable: false) {
+  id: Bytes!
+  poolId: Bytes!
+  lp: Bytes!
+  ptAmount: BigInt!
+  ytAmount: BigInt!
+  maturity: BigInt!
+  principal: BigInt!
+  totalFees: BigInt!
+  ilCovered: BigInt!
+  openedAt: BigInt!
+  closedAt: BigInt
+}
+
+type FeeRoute @entity(immutable: true) {
+  id: Bytes!
+  poolId: Bytes!
+  ytFees: BigInt!
+  insuranceFees: BigInt!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ILCoverage @entity(immutable: true) {
+  id: Bytes!
+  poolId: Bytes!
+  lp: Bytes!
+  ilAmount: BigInt!
+  paidAmount: BigInt!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  transactionHash: Bytes!
+}
+
