@@ -1,0 +1,11 @@
+node_modules/
+.next/
+out/
+cache/
+coverage/
+server.log
+server.err.log
+*.log
+.env
+.env.local
+DEVELOPMENT_PLAN.md

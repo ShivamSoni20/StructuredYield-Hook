@@ -9,65 +9,109 @@ The goal is to make Uniswap V4 LP exposure easier to reason about for fixed-inco
 
 ## Current Status
 
-Phase 0 and Phase 1 foundations are in place:
+Phase 1 through Phase 4 foundations are in place:
 
-- Static landing/dashboard prototype in `index.html`
 - Foundry contract scaffold in `contracts/`
 - Hook-only PT/YT token contracts
-- Phase 1 hook lifecycle skeleton
-- Unit tests for mint/burn and deposit/redeem lifecycle
+- Phase 1 pool init, deposit minting, and maturity redemption
+- Phase 2 IL math, premium quoting, insurance reserve ledger, and YT fee accounting
+- Phase 3 router and lens periphery contracts
+- Phase 4 Next.js + Wagmi frontend scaffold with dashboard, deposit modal, and position detail routes
+- Unit tests for token permissions, deposit/redeem lifecycle, IL math, vault payouts, fee accrual, router, and lens
 
 ## Repository Structure
 
 ```text
 .
-├── index.html
-├── DEVELOPMENT_PLAN.md
-├── README.md
-└── contracts/
-    ├── foundry.toml
-    ├── remappings.txt
-    ├── src/
-    │   ├── StructuredYieldHook.sol
-    │   └── tokens/
-    │       ├── HookMintableERC20.sol
-    │       ├── PTToken.sol
-    │       └── YTToken.sol
-    └── test/
-        └── unit/
-            ├── PTToken.t.sol
-            ├── YTToken.t.sol
-            └── StructuredYieldHook.t.sol
+|-- README.md
+|-- brand.md
+|-- frontend/
+|   |-- app/
+|   |   |-- dashboard/page.tsx
+|   |   |-- positions/[id]/page.tsx
+|   |   |-- globals.css
+|   |   |-- layout.tsx
+|   |   `-- page.tsx
+|   |-- components/
+|   |-- hooks/
+|   `-- lib/
+`-- contracts/
+    |-- foundry.toml
+    |-- remappings.txt
+    |-- src/
+    |   |-- StructuredYieldHook.sol
+    |   |-- accounting/YieldAccounting.sol
+    |   |-- math/FixedPointMath.sol
+    |   |-- math/ILMath.sol
+    |   |-- math/PremiumMath.sol
+    |   |-- periphery/SYLens.sol
+    |   |-- periphery/SYRouter.sol
+    |   |-- tokens/HookMintableERC20.sol
+    |   |-- tokens/PTToken.sol
+    |   |-- tokens/YTToken.sol
+    |   `-- vault/InsuranceVault.sol
+    `-- test/unit/
+        |-- ILMath.t.sol
+        |-- InsuranceVault.t.sol
+        |-- PTToken.t.sol
+        |-- SYLens.t.sol
+        |-- SYRouter.t.sol
+        |-- StructuredYieldHook.t.sol
+        |-- YieldAccounting.t.sol
+        `-- YTToken.t.sol
 ```
 
 ## Smart Contracts
 
 ### `StructuredYieldHook`
 
-Phase 1 lifecycle contract that:
+Dependency-light Phase 2 hook skeleton that:
 
 - Initializes per-pool PT/YT token pairs
 - Records LP deposit metadata
 - Mints PT-LP and YT-LP on deposit
+- Routes swap fees between YT holders and the insurance reserve
+- Quotes and covers impermanent loss from the reserve ledger
+- Claims accrued YT fees
 - Burns PT-LP and YT-LP on maturity redemption
+
+### `SYRouter`
+
+User-facing helper for pool initialization, deposit-and-mint, fee claim, and remove-and-redeem flows.
+
+### `SYLens`
+
+Read-only aggregator for frontend position views, IL status, maturity countdown, and solvency state.
 
 ### `PTToken` and `YTToken`
 
 Minimal ERC-20 style tokens with hook-only mint/burn permissions.
 
-## Local Preview
+### `ILMath`, `PremiumMath`, `InsuranceVault`, and `YieldAccounting`
 
-Serve the static UI from the project root:
+Phase 2 support modules for impermanent-loss quotes, premium estimates, reserve-capped payouts, and YT fee accrual.
+
+## Frontend
+
+The `frontend/` app is a Next.js 14 App Router project wired for Wagmi and Viem.
+
+Run locally after installing dependencies:
 
 ```bash
-python -m http.server 3000
+cd frontend
+npm install
+npm run dev
 ```
 
-Then open:
+Optional deployment variables:
 
-```text
-http://localhost:3000
+```bash
+NEXT_PUBLIC_STRUCTURED_YIELD_HOOK=0x...
+NEXT_PUBLIC_SY_ROUTER=0x...
+NEXT_PUBLIC_SY_LENS=0x...
 ```
+
+Without deployed addresses, the UI falls back to demo data so the dashboard remains explorable.
 
 ## Contract Tests
 
@@ -78,26 +122,24 @@ cd contracts
 forge test -vvv
 ```
 
-Targeted Phase 1 tests:
+Targeted tests:
 
 ```bash
 forge test --match-contract PTTokenTest -vvv
 forge test --match-contract YTTokenTest -vvv
 forge test --match-contract StructuredYieldHookTest -vvv
+forge test --match-contract ILMathTest -vvv
+forge test --match-contract InsuranceVaultTest -vvv
+forge test --match-contract YieldAccountingTest -vvv
+forge test --match-contract SYRouterTest -vvv
+forge test --match-contract SYLensTest -vvv
 ```
 
-## Development Roadmap
+## Roadmap
 
-See `DEVELOPMENT_PLAN.md` for the full phase-by-phase roadmap.
-
-Upcoming phases:
-
-- **Phase 2**: IL math, insurance vault, premium math, fee routing
-- **Phase 3**: router, lens, testnet deployment
-- **Phase 4**: Next.js + Wagmi frontend
 - **Phase 5**: audit pass, gas benchmarks, demo polish
 
 ## Notes
 
-The current hook is intentionally dependency-light so Phase 1 can be developed before pulling in full Uniswap V4 packages. The next contract milestone is adapting `StructuredYieldHook.sol` to real `BaseHook` callback signatures after installing Foundry dependencies.
+The current hook remains dependency-light so the product mechanics can be developed before pulling in full Uniswap V4 packages. The next contract milestone is adapting `StructuredYieldHook.sol` to real `BaseHook` callback signatures after installing Foundry and Uniswap V4 dependencies.
 

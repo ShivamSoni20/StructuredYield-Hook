@@ -28,6 +28,8 @@ contract StructuredYieldHookTest is Test {
             uint256 ptMinted,
             uint256 ytMinted,
             uint256 depositTimestamp,
+            uint256 ilCovered,
+            uint256 feesClaimed,
             bool active
         ) = hook.positions(poolId, lp);
 
@@ -36,6 +38,8 @@ contract StructuredYieldHookTest is Test {
         assertEq(ptMinted, 10_000 ether);
         assertEq(ytMinted, (10_000 ether * 90 days) / 365 days);
         assertEq(depositTimestamp, block.timestamp);
+        assertEq(ilCovered, 0);
+        assertEq(feesClaimed, 0);
         assertTrue(active);
         assertEq(PTToken(ptToken).balanceOf(lp), 10_000 ether);
         assertEq(YTToken(ytToken).balanceOf(lp), ytMinted);
@@ -55,7 +59,7 @@ contract StructuredYieldHookTest is Test {
         assertEq(PTToken(ptToken).totalSupply(), 0);
         assertEq(YTToken(ytToken).totalSupply(), 0);
 
-        (,,,,, bool active) = hook.positions(poolId, lp);
+        (,,,,,,, bool active) = hook.positions(poolId, lp);
         assertFalse(active);
     }
 
@@ -67,5 +71,34 @@ contract StructuredYieldHookTest is Test {
         vm.expectRevert();
         hook.afterRemoveLiquidity(poolId, lp);
     }
-}
 
+    function testAfterSwapRoutesFeesToYTAndInsurance() public {
+        uint256 maturity = block.timestamp + 90 days;
+        hook.initializePool(poolId, maturity);
+        hook.beforeAddLiquidity(poolId, lp, 10_000 ether, sqrtPrice);
+
+        hook.afterSwap(poolId, 100 ether);
+
+        assertEq(hook.claimFees(poolId, lp), 80 ether);
+        assertEq(hook.insuranceVault().reserves(poolId), 20 ether);
+    }
+
+    function testBeforeRemoveLiquidityCoversILFromVault() public {
+        uint256 maturity = block.timestamp + 90 days;
+        hook.initializePool(poolId, maturity);
+        hook.beforeAddLiquidity(poolId, lp, 10_000 ether, sqrtPrice);
+        hook.fundInsuranceReserve(poolId, 3_000 ether);
+
+        uint160 doubledSqrtPrice = sqrtPrice * 2;
+        (uint256 ilAmount, uint256 ilBps) = hook.quoteIL(poolId, lp, doubledSqrtPrice);
+        assertEq(ilBps, 2_000);
+        assertEq(ilAmount, 2_000 ether);
+
+        hook.beforeRemoveLiquidity(poolId, lp, doubledSqrtPrice);
+
+        (,,,,, uint256 ilCovered,, bool active) = hook.positions(poolId, lp);
+        assertTrue(active);
+        assertEq(ilCovered, 2_000 ether);
+        assertEq(hook.insuranceVault().reserves(poolId), 1_000 ether);
+    }
+}
