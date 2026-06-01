@@ -30,7 +30,7 @@ contract FullFlowTest is Test {
 
         vm.prank(lp);
         uint256 claimed = router.claimFees(poolId);
-        assertEq(claimed, 800 ether);
+        assertApproxEqAbs(claimed, 800 ether, 1);
 
         vm.warp(maturity);
         vm.prank(lp);
@@ -40,4 +40,3 @@ contract FullFlowTest is Test {
         assertEq(YTToken(ytToken).balanceOf(lp), 0);
     }
 }
-

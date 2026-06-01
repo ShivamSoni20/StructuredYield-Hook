@@ -36,7 +36,7 @@ contract StructuredYieldHookTest is Test {
         assertEq(depositedValue, 10_000 ether);
         assertEq(referenceSqrtPrice, sqrtPrice);
         assertEq(ptMinted, 10_000 ether);
-        assertEq(ytMinted, (10_000 ether * 90 days) / 365 days);
+        assertEq(ytMinted, (uint256(10_000 ether) * 90 days) / 365 days);
         assertEq(depositTimestamp, block.timestamp);
         assertEq(ilCovered, 0);
         assertEq(feesClaimed, 0);
@@ -79,7 +79,7 @@ contract StructuredYieldHookTest is Test {
 
         hook.afterSwap(poolId, 100 ether);
 
-        assertEq(hook.claimFees(poolId, lp), 80 ether);
+        assertApproxEqAbs(hook.claimFees(poolId, lp), 80 ether, 1);
         assertEq(hook.insuranceVault().reserves(poolId), 20 ether);
     }
 

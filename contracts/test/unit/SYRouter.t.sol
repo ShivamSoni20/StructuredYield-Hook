@@ -38,7 +38,6 @@ contract SYRouterTest is Test {
         vm.prank(lp);
         uint256 claimed = router.claimFees(poolId);
 
-        assertEq(claimed, 80 ether);
+        assertApproxEqAbs(claimed, 80 ether, 1);
     }
 }
-

@@ -9,3 +9,4 @@ server.err.log
 .env
 .env.local
 DEVELOPMENT_PLAN.md
+.tools/

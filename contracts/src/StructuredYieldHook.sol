@@ -13,6 +13,7 @@ contract StructuredYieldHook {
     uint256 public constant YT_FEE_SHARE_BPS = 8_000;
     uint256 public constant INSURANCE_FEE_SHARE_BPS = 2_000;
     uint256 public constant BPS = 10_000;
+    bytes4 public constant AFTER_SWAP_SELECTOR = bytes4(keccak256("afterSwap(bytes32,uint256,uint160)"));
 
     struct PoolConfig {
         uint256 maturityTimestamp;
@@ -128,7 +129,7 @@ contract StructuredYieldHook {
         if (currentSqrtPrice != 0) {
             pool.volatilityBps = volatilityOracle.observe(poolId, currentSqrtPrice);
         }
-        if (feeAmount == 0) return this.afterSwap.selector;
+        if (feeAmount == 0) return AFTER_SWAP_SELECTOR;
 
         uint256 ytFees = (feeAmount * YT_FEE_SHARE_BPS) / BPS;
         uint256 insuranceFees = feeAmount - ytFees;
@@ -142,7 +143,7 @@ contract StructuredYieldHook {
 
         emit FeesRouted(poolId, ytFees, insuranceFees);
 
-        return this.afterSwap.selector;
+        return AFTER_SWAP_SELECTOR;
     }
 
     function beforeRemoveLiquidity(

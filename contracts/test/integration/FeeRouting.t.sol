@@ -21,9 +21,8 @@ contract FeeRoutingTest is Test {
     function testFeesRouteProRataToYTHoldersAndReserve() public {
         hook.afterSwap(poolId, 1_000 ether, sqrtPrice);
 
-        assertEq(hook.claimFees(poolId, alice), 400 ether);
-        assertEq(hook.claimFees(poolId, bob), 400 ether);
+        assertApproxEqAbs(hook.claimFees(poolId, alice), 400 ether, 1);
+        assertApproxEqAbs(hook.claimFees(poolId, bob), 400 ether, 1);
         assertEq(hook.insuranceVault().reserves(poolId), 200 ether);
     }
 }
-

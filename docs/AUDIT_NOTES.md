@@ -21,7 +21,7 @@ Reviewed source areas:
 | Oracle assumptions | Good | IL math uses reference/current sqrt price inputs; no external oracle dependency in current model. |
 | Solvency | Partial | Vault caps payout by reserve; no reserve target enforcement yet. |
 | Token custody | Not in scope | Current scaffold accounts value but does not custody underlying LP tokens. |
-| Uniswap V4 integration | Not complete | Needs final `BaseHook` adaptation and pool-manager tests. |
+| Uniswap V4 integration | Partial | `StructuredYieldV4Hook` implements the installed `IHooks` callback surface directly; final PoolManager settlement tests remain. |
 
 ## Known Risks
 
@@ -33,16 +33,16 @@ Reviewed source areas:
 
 ## Tooling Status
 
-- Slither: not run locally because `slither` is not installed.
-- Foundry tests: not run locally because `forge` is not installed.
+- Slither: ran locally with `slither . --exclude-dependencies`; no Critical/High findings, but medium/info findings remain for reentrancy review, timestamp usage, divide-before-multiply, unused returns, and zero-address validation.
+- Foundry tests: `forge test -vvv` passes with 30 tests.
+- Gas snapshot: `forge snapshot` passes and writes `contracts/.gas-snapshot`.
 - Frontend build: runs with `npm.cmd run build`.
 
 ## Pre-Testnet Remediation
 
 - Add `Ownable` or explicit deployer/admin controls.
-- Pull in Uniswap V4 dependencies and inherit `BaseHook`.
+- Keep the direct `IHooks` adapter or switch to `BaseHook` if a future `v4-periphery` release exposes it.
 - Add fork tests against the target V4 deployment.
 - Add fuzz tests for IL math and accounting.
-- Run `slither .` and resolve all High/Critical findings.
-- Run `forge snapshot` and compare gas against targets.
-
+- Resolve remaining Slither medium/info findings before real testnet custody.
+- Compare `forge snapshot` values against final production gas targets.

@@ -1,6 +1,6 @@
-# Uniswap V4 BaseHook Migration
+# Uniswap V4 Hook Migration
 
-This repository currently keeps `StructuredYieldHook` dependency-light so the PT/YT, fee-routing, IL, vault, router, lens, and frontend mechanics can be developed without blocking on external packages.
+This repository keeps `StructuredYieldHook` as the dependency-light accounting scaffold and adds `StructuredYieldV4Hook` as the Uniswap V4-facing adapter.
 
 ## Required Dependency Install
 
@@ -23,20 +23,20 @@ forge-std/=lib/forge-std/src/
 
 ## Contract Conversion Checklist
 
-1. Change `StructuredYieldHook` to inherit `BaseHook`.
-2. Store `IPoolManager` through the `BaseHook` constructor.
+1. Keep `StructuredYieldHook` as the independently testable accounting core.
+2. Use `StructuredYieldV4Hook` for the current `IHooks` callback surface.
 3. Replace `bytes32 poolId` with `PoolKey calldata key` + `key.toId()` where callback entrypoints are used.
-4. Implement `getHookPermissions()` with:
+4. `getHookPermissions()` currently enables:
    - `afterInitialize`
    - `beforeAddLiquidity`
    - `beforeRemoveLiquidity`
    - `afterRemoveLiquidity`
    - `afterSwap`
-5. Move `initializePool` logic into `afterInitialize`.
-6. Derive `referenceSqrtPrice` from `poolManager.getSlot0(id)` in `beforeAddLiquidity`.
-7. Route swap fees from actual V4 swap deltas in `afterSwap`.
+5. `afterInitialize` initializes PT/YT lifecycle state for the V4 pool id.
+6. `beforeAddLiquidity` accepts explicit LP accounting data through `hookData`.
+7. `afterSwap` routes deterministic delta-derived fee input into the accounting path.
 8. Validate deployed hook address has the correct permission bits.
-9. Replace demo `depositValue` accounting with real liquidity/value computation.
+9. Replace demo `depositValue` accounting with real liquidity/value computation before mainnet use.
 10. Update `SYRouter` to call PoolManager modify-liquidity flows rather than direct hook methods.
 
 ## Target Callback Mapping
@@ -49,7 +49,7 @@ forge-std/=lib/forge-std/src/
 | `beforeRemoveLiquidity(bytes32,address,uint160)` | `beforeRemoveLiquidity(address, PoolKey, ModifyLiquidityParams, bytes)` |
 | `afterRemoveLiquidity(bytes32,address)` | `afterRemoveLiquidity(address, PoolKey, ModifyLiquidityParams, BalanceDelta, BalanceDelta, bytes)` |
 
-## Blocker
+## Notes
 
-The local environment currently does not expose a working `forge` command, so the actual import-based migration cannot be validated here yet.
-
+- The installed `v4-periphery` package does not expose a `BaseHook.sol`, so the adapter implements `IHooks` directly.
+- Hook deployment must mine or otherwise choose an address with the configured V4 permission bits.
