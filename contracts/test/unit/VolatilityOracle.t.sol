@@ -17,9 +17,22 @@ contract VolatilityOracleTest is Test {
         vm.startPrank(hook);
 
         assertEq(oracle.observe(poolId, 100), 0);
-        assertEq(oracle.observe(poolId, 110), 1_000);
-        assertEq(oracle.observe(poolId, 99), 1_000);
-        assertEq(oracle.getVolatilityBps(poolId), 1_000);
+        assertEq(oracle.observe(poolId, 110), 952);
+        assertEq(oracle.observe(poolId, 99), 1_004);
+        assertEq(oracle.getVolatilityBps(poolId), 1_004);
+
+        vm.stopPrank();
+    }
+
+    function testEqualUpAndDownMovesUseSymmetricBps() public {
+        vm.startPrank(hook);
+
+        oracle.observe(poolId, 100);
+        uint256 upMove = oracle.observe(poolId, 110);
+        uint256 averageAfterDownMove = oracle.observe(poolId, 100);
+
+        assertEq(upMove, 952);
+        assertEq(averageAfterDownMove, 952);
 
         vm.stopPrank();
     }
@@ -29,4 +42,3 @@ contract VolatilityOracleTest is Test {
         oracle.observe(poolId, 100);
     }
 }
-

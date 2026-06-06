@@ -74,7 +74,8 @@ contract VolatilityOracle {
         uint256 larger = current > previous ? uint256(current) : uint256(previous);
         uint256 smaller = current > previous ? uint256(previous) : uint256(current);
 
-        return ((larger - smaller) * BPS) / uint256(previous);
+        uint256 midpoint = (uint256(previous) + uint256(current)) / 2;
+
+        return ((larger - smaller) * BPS) / midpoint;
     }
 }
-

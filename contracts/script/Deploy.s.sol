@@ -8,13 +8,14 @@ import {SYRouter} from "../src/periphery/SYRouter.sol";
 
 contract Deploy is Script {
     function run() external returns (StructuredYieldHook hook, SYRouter router, SYLens lens) {
-        vm.startBroadcast();
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+
+        vm.startBroadcast(deployerPrivateKey);
 
         hook = new StructuredYieldHook();
-        router = new SYRouter(hook);
+        router = new SYRouter(hook, true);
         lens = new SYLens(hook);
 
         vm.stopBroadcast();
     }
 }
-

@@ -69,7 +69,7 @@ contract StructuredYieldHookTest is Test {
         hook.beforeAddLiquidity(poolId, lp, 5_000 ether, sqrtPrice);
 
         vm.expectRevert();
-        hook.afterRemoveLiquidity(poolId, lp);
+        hook.beforeRemoveLiquidity(poolId, lp, sqrtPrice);
     }
 
     function testAfterSwapRoutesFeesToYTAndInsurance() public {
@@ -94,6 +94,7 @@ contract StructuredYieldHookTest is Test {
         assertEq(ilBps, 2_000);
         assertEq(ilAmount, 2_000 ether);
 
+        vm.warp(maturity);
         hook.beforeRemoveLiquidity(poolId, lp, doubledSqrtPrice);
 
         (,,,,, uint256 ilCovered,, bool active) = hook.positions(poolId, lp);

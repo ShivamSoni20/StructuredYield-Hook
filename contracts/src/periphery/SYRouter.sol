@@ -5,6 +5,7 @@ import {StructuredYieldHook} from "../StructuredYieldHook.sol";
 
 contract SYRouter {
     StructuredYieldHook public immutable hook;
+    bool public immutable isScaffoldMode;
 
     event DepositAndMint(
         bytes32 indexed poolId,
@@ -19,8 +20,11 @@ contract SYRouter {
         uint160 currentSqrtPrice
     );
 
-    constructor(StructuredYieldHook hook_) {
+    error ProductionPoolManagerRequired();
+
+    constructor(StructuredYieldHook hook_, bool isScaffoldMode_) {
         hook = hook_;
+        isScaffoldMode = isScaffoldMode_;
     }
 
     function initializePool(bytes32 poolId, uint256 maturityTimestamp)
@@ -35,12 +39,16 @@ contract SYRouter {
         uint256 depositValue,
         uint160 referenceSqrtPrice
     ) external returns (bytes4 selector) {
+        if (!isScaffoldMode) revert ProductionPoolManagerRequired();
+        // TODO: Replace this dependency-light scaffold path with PoolManager.modifyLiquidity for live V4 deployments.
         selector = hook.beforeAddLiquidity(poolId, msg.sender, depositValue, referenceSqrtPrice);
 
         emit DepositAndMint(poolId, msg.sender, depositValue, referenceSqrtPrice);
     }
 
     function removeAndRedeem(bytes32 poolId, uint160 currentSqrtPrice) external returns (bytes4 selector) {
+        if (!isScaffoldMode) revert ProductionPoolManagerRequired();
+        // TODO: Replace these direct hook calls with PoolManager settlement flows for live V4 deployments.
         hook.beforeRemoveLiquidity(poolId, msg.sender, currentSqrtPrice);
         selector = hook.afterRemoveLiquidity(poolId, msg.sender);
 
@@ -51,4 +59,3 @@ contract SYRouter {
         return hook.claimFees(poolId, msg.sender);
     }
 }
-

@@ -39,7 +39,7 @@ contract StructuredYieldV4Hook is StructuredYieldHook, IHooks {
     }
 
     function afterInitialize(address, PoolKey calldata key, uint160, int24) external returns (bytes4) {
-        this.initializePool(_poolId(key), block.timestamp + DEFAULT_MATURITY_DURATION);
+        super.initializePool(_poolId(key), block.timestamp + DEFAULT_MATURITY_DURATION);
         return IHooks.afterInitialize.selector;
     }
 
@@ -51,7 +51,7 @@ contract StructuredYieldV4Hook is StructuredYieldHook, IHooks {
     ) external returns (bytes4) {
         (address lp, uint256 depositValue, uint160 referenceSqrtPrice) =
             _decodeLiquidityHookData(sender, params, hookData);
-        _callCore(abi.encodeWithSelector(StructuredYieldHook.beforeAddLiquidity.selector, _poolId(key), lp, depositValue, referenceSqrtPrice));
+        super.beforeAddLiquidity(_poolId(key), lp, depositValue, referenceSqrtPrice);
         return IHooks.beforeAddLiquidity.selector;
     }
 
@@ -73,7 +73,7 @@ contract StructuredYieldV4Hook is StructuredYieldHook, IHooks {
         bytes calldata hookData
     ) external returns (bytes4) {
         (address lp, uint160 currentSqrtPrice) = _decodeRemovalHookData(sender, hookData);
-        this.beforeRemoveLiquidity(_poolId(key), lp, currentSqrtPrice);
+        super.beforeRemoveLiquidity(_poolId(key), lp, currentSqrtPrice);
         return IHooks.beforeRemoveLiquidity.selector;
     }
 
@@ -86,7 +86,7 @@ contract StructuredYieldV4Hook is StructuredYieldHook, IHooks {
         bytes calldata hookData
     ) external returns (bytes4, BalanceDelta) {
         address lp = hookData.length >= 32 ? abi.decode(hookData, (address)) : sender;
-        this.afterRemoveLiquidity(_poolId(key), lp);
+        super.afterRemoveLiquidity(_poolId(key), lp);
         return (IHooks.afterRemoveLiquidity.selector, BalanceDeltaLibrary.ZERO_DELTA);
     }
 
@@ -107,7 +107,7 @@ contract StructuredYieldV4Hook is StructuredYieldHook, IHooks {
     ) external returns (bytes4, int128) {
         uint160 currentSqrtPrice = hookData.length >= 32 ? abi.decode(hookData, (uint160)) : 0;
         uint256 feeAmount = _absoluteDeltaValue(delta);
-        _callCore(abi.encodeWithSelector(AFTER_SWAP_SELECTOR, _poolId(key), feeAmount, currentSqrtPrice));
+        super.afterSwap(_poolId(key), feeAmount, currentSqrtPrice);
         return (IHooks.afterSwap.selector, 0);
     }
 
@@ -158,12 +158,4 @@ contract StructuredYieldV4Hook is StructuredYieldHook, IHooks {
         return PoolId.unwrap(poolId);
     }
 
-    function _callCore(bytes memory data) internal {
-        (bool success, bytes memory returnData) = address(this).call(data);
-        if (!success) {
-            assembly ("memory-safe") {
-                revert(add(returnData, 0x20), mload(returnData))
-            }
-        }
-    }
 }

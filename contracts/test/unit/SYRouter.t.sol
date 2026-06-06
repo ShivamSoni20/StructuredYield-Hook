@@ -15,7 +15,7 @@ contract SYRouterTest is Test {
 
     function setUp() public {
         hook = new StructuredYieldHook();
-        router = new SYRouter(hook);
+        router = new SYRouter(hook, true);
     }
 
     function testDepositAndMintUsesSenderAsLP() public {
@@ -39,5 +39,16 @@ contract SYRouterTest is Test {
         uint256 claimed = router.claimFees(poolId);
 
         assertApproxEqAbs(claimed, 80 ether, 1);
+    }
+
+    function testProductionModeRejectsScaffoldEntrypoints() public {
+        SYRouter productionRouter = new SYRouter(hook, false);
+        productionRouter.initializePool(poolId, block.timestamp + 30 days);
+
+        vm.expectRevert(SYRouter.ProductionPoolManagerRequired.selector);
+        productionRouter.depositAndMint(poolId, 1_000 ether, sqrtPrice);
+
+        vm.expectRevert(SYRouter.ProductionPoolManagerRequired.selector);
+        productionRouter.removeAndRedeem(poolId, sqrtPrice);
     }
 }

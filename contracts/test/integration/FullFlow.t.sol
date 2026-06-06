@@ -14,9 +14,11 @@ contract FullFlowTest is Test {
     address private lp = address(0xCAFE);
     uint160 private sqrtPrice = 79228162514264337593543950336;
 
+    event PositionClosed(bytes32 indexed poolId, address indexed lp, uint256 principal, uint256 totalFees);
+
     function setUp() public {
         hook = new StructuredYieldHook();
-        router = new SYRouter(hook);
+        router = new SYRouter(hook, true);
     }
 
     function testDepositSwapMatureRedeemFlow() public {
@@ -33,6 +35,8 @@ contract FullFlowTest is Test {
         assertApproxEqAbs(claimed, 800 ether, 1);
 
         vm.warp(maturity);
+        vm.expectEmit(true, true, false, true);
+        emit PositionClosed(poolId, lp, 50_000 ether, claimed);
         vm.prank(lp);
         router.removeAndRedeem(poolId, sqrtPrice);
 

@@ -63,7 +63,7 @@ contract StructuredYieldHook {
         yieldAccounting = new YieldAccounting(address(this));
     }
 
-    function initializePool(bytes32 poolId, uint256 maturityTimestamp) external returns (address ptToken, address ytToken) {
+    function initializePool(bytes32 poolId, uint256 maturityTimestamp) public returns (address ptToken, address ytToken) {
         if (pools[poolId].initialized) revert PoolAlreadyInitialized();
         if (maturityTimestamp <= block.timestamp) revert InvalidMaturity();
 
@@ -91,7 +91,7 @@ contract StructuredYieldHook {
         address lp,
         uint256 depositValue,
         uint160 referenceSqrtPrice
-    ) external returns (bytes4) {
+    ) public returns (bytes4) {
         PoolConfig memory pool = pools[poolId];
         if (!pool.initialized) revert PoolNotInitialized();
         if (depositValue == 0) revert InvalidDepositValue();
@@ -150,9 +150,10 @@ contract StructuredYieldHook {
         bytes32 poolId,
         address lp,
         uint160 currentSqrtPrice
-    ) external returns (bytes4) {
+    ) public returns (bytes4) {
         PoolConfig storage pool = pools[poolId];
         if (!pool.initialized) revert PoolNotInitialized();
+        if (block.timestamp < pool.maturityTimestamp) revert PositionNotMatured();
 
         LPPosition storage position = positions[poolId][lp];
         if (!position.active) revert PositionNotActive();
@@ -174,22 +175,22 @@ contract StructuredYieldHook {
         return this.beforeRemoveLiquidity.selector;
     }
 
-    function afterRemoveLiquidity(bytes32 poolId, address lp) external returns (bytes4) {
+    function afterRemoveLiquidity(bytes32 poolId, address lp) public returns (bytes4) {
         PoolConfig memory pool = pools[poolId];
         if (!pool.initialized) revert PoolNotInitialized();
 
         LPPosition memory position = positions[poolId][lp];
         if (!position.active) revert PositionNotActive();
-        if (block.timestamp < pool.maturityTimestamp) revert PositionNotMatured();
 
         uint256 claimedFees = yieldAccounting.claimFees(poolId, lp, position.ytMinted);
+        uint256 totalFees = position.feesClaimed + claimedFees;
 
         delete positions[poolId][lp];
 
         PTToken(pool.ptToken).burn(lp, position.ptMinted);
         YTToken(pool.ytToken).burn(lp, position.ytMinted);
 
-        emit PositionClosed(poolId, lp, position.ptMinted, claimedFees);
+        emit PositionClosed(poolId, lp, position.ptMinted, totalFees);
 
         return this.afterRemoveLiquidity.selector;
     }
@@ -236,7 +237,7 @@ contract StructuredYieldHook {
         if (!pool.initialized) revert PoolNotInitialized();
 
         uint256 secondsToMaturity = block.timestamp >= pool.maturityTimestamp ? 0 : pool.maturityTimestamp - block.timestamp;
-        uint256 reserveRatioBps = pool.insuranceReserve == 0 ? 0 : (pool.insuranceReserve * BPS) / 1e18;
+        uint256 reserveRatioBps = pool.insuranceReserve == 0 ? 0 : (pool.insuranceReserve * BPS) / (pool.feeBuffer + 1);
 
         return PremiumMath.computePremiumBps(pool.volatilityBps, secondsToMaturity, reserveRatioBps);
     }

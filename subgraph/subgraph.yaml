@@ -6,7 +6,7 @@ schema:
 dataSources:
   - kind: ethereum
     name: StructuredYieldHook
-    network: base-sepolia
+    network: unichain-sepolia
     source:
       address: "0x0000000000000000000000000000000000000000"
       abi: StructuredYieldHook
@@ -32,4 +32,3 @@ dataSources:
         - event: PositionClosed(indexed bytes32,indexed address,uint256,uint256)
           handler: handlePositionClosed
       file: ./src/mappings.ts
-

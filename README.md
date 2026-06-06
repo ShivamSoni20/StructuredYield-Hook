@@ -130,9 +130,10 @@ npm run dev
 Optional deployment variables:
 
 ```bash
-NEXT_PUBLIC_STRUCTURED_YIELD_HOOK=0x...
-NEXT_PUBLIC_SY_ROUTER=0x...
-NEXT_PUBLIC_SY_LENS=0x...
+NEXT_PUBLIC_STRUCTURED_YIELD_HOOK=0x03FBa520D28659c9CA074cD39d0c43CB40C00537
+NEXT_PUBLIC_SY_ROUTER=0xaCAb5Ce99eA648bBB5FF451B0094625dfbDbd53E
+NEXT_PUBLIC_SY_LENS=0x5497ebcdaDC01928bBdbbBF376265A3713b68B26
+NEXT_PUBLIC_CHAIN_ID=1301
 ```
 
 Without deployed addresses, the UI falls back to demo data so the dashboard remains explorable.
@@ -167,6 +168,88 @@ Create a demo pool after deploying:
 cd contracts
 STRUCTURED_YIELD_HOOK=0x... forge script script/CreatePool.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
 ```
+
+## Unichain Sepolia Deployment
+
+Network details:
+
+- Network: Unichain Sepolia
+- Chain ID: `1301`
+- RPC: `https://sepolia.unichain.org`
+- Explorer: `https://unichain-sepolia.blockscout.com`
+
+Current verified deployment:
+
+| Contract | Address |
+|---|---|
+| `StructuredYieldHook` | `0x03FBa520D28659c9CA074cD39d0c43CB40C00537` |
+| `SYRouter` | `0xaCAb5Ce99eA648bBB5FF451B0094625dfbDbd53E` |
+| `SYLens` | `0x5497ebcdaDC01928bBdbbBF376265A3713b68B26` |
+| `InsuranceVault` | `0x828E60F2946d7D9a33627b25958072d639fF8174` |
+| `VolatilityOracle` | `0x577E46CcD27647aC7854b08A4cA268f1F5581bdA` |
+| `YieldAccounting` | `0x63a8fA11Fc4708Fe2e8934f955dCc226E887E922` |
+
+Demo pool:
+
+| Item | Value |
+|---|---|
+| Pool ID | `0x68e0465db415eaa3b5192042dc86918f2f1d06dbfdf937be0fbccebe843f47eb` |
+| `PTToken` | `0xcF189F674Fc4706e0438Bb98E189b8F583e545F1` |
+| `YTToken` | `0x43dB13842f711226F2111120540AAa62A213dC41` |
+| Maturity | 90 days from pool creation |
+
+Deploy the scaffold contracts to Unichain Sepolia:
+
+```bash
+cd contracts
+cp .env.example .env
+# fill in PRIVATE_KEY in .env
+source .env
+forge script script/Deploy.s.sol \
+  --rpc-url unichain_sepolia \
+  --broadcast \
+  --verify \
+  --verifier blockscout \
+  --verifier-url https://unichain-sepolia.blockscout.com/api \
+  -vvvv
+```
+
+Create a pool after deployment:
+
+```bash
+STRUCTURED_YIELD_HOOK=0x03FBa520D28659c9CA074cD39d0c43CB40C00537 \
+forge script script/CreatePool.s.sol \
+  --rpc-url unichain_sepolia \
+  --broadcast \
+  -vvvv
+```
+
+On Windows PowerShell with the local Foundry binary:
+
+```powershell
+cd contracts
+$env:STRUCTURED_YIELD_HOOK="0x03FBa520D28659c9CA074cD39d0c43CB40C00537"
+& "..\.tools\foundry\forge.exe" script script/CreatePool.s.sol --rpc-url unichain_sepolia --broadcast --private-key $env:PRIVATE_KEY -vvvv
+```
+
+Frontend environment:
+
+```bash
+cd frontend
+cp .env.example .env.local
+# or create .env.local manually:
+NEXT_PUBLIC_STRUCTURED_YIELD_HOOK=0x03FBa520D28659c9CA074cD39d0c43CB40C00537
+NEXT_PUBLIC_SY_ROUTER=0xaCAb5Ce99eA648bBB5FF451B0094625dfbDbd53E
+NEXT_PUBLIC_SY_LENS=0x5497ebcdaDC01928bBdbbBF376265A3713b68B26
+NEXT_PUBLIC_CHAIN_ID=1301
+```
+
+Manual demo flow:
+
+1. Start the frontend with `npm run dev`.
+2. Connect MetaMask to Unichain Sepolia.
+3. Use RPC `https://sepolia.unichain.org` and chain ID `1301`.
+4. Test the scaffold flow: deposit, route swap fees, claim fees, then redeem at maturity.
 
 ## Demo
 
@@ -215,6 +298,16 @@ forge test --match-contract FullFlowTest -vvv
 forge test --match-contract ILCoverageTest -vvv
 forge test --match-contract FeeRoutingTest -vvv
 ```
+
+## Security Scan
+
+Run Slither from `contracts/`:
+
+```bash
+slither . --exclude-dependencies
+```
+
+Current local scan completed with no Critical/High-labeled findings in the output. Remaining findings are scaffold-level review items: reentrancy review, timestamp usage, divide-before-multiply, unused returns, zero-address checks, and style warnings.
 
 ## Roadmap
 

@@ -23,6 +23,7 @@ contract ILCoverageTest is Test {
         (uint256 ilAmount, uint256 ilBps) = hook.quoteIL(poolId, lp, currentSqrtPrice);
         assertApproxEqAbs(ilBps, 85, 2);
 
+        vm.warp(block.timestamp + 90 days);
         hook.beforeRemoveLiquidity(poolId, lp, currentSqrtPrice);
 
         (,,,,, uint256 ilCovered,,) = hook.positions(poolId, lp);
@@ -33,10 +34,10 @@ contract ILCoverageTest is Test {
         hook.fundInsuranceReserve(poolId, 250 ether);
         uint160 currentSqrtPrice = uint160((uint256(sqrtPrice) * 1_800_000_000) / 1_000_000_000);
 
+        vm.warp(block.timestamp + 90 days);
         hook.beforeRemoveLiquidity(poolId, lp, currentSqrtPrice);
 
         (,,,,, uint256 ilCovered,,) = hook.positions(poolId, lp);
         assertEq(ilCovered, 250 ether);
     }
 }
-
