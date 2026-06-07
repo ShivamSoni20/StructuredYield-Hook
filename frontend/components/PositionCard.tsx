@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import { usePosition } from "@/hooks/usePositions";
+import { DEMO_POSITIONS } from "@/lib/demo";
 import { formatBps, formatCurrency, formatDuration } from "@/lib/math";
 import { PTYTSplitVisual } from "@/components/PTYTSplitVisual";
 
@@ -54,7 +55,7 @@ export function PositionCard() {
       </dl>
 
       <Link
-        href="/positions/demo"
+        href={`/positions/${DEMO_POSITIONS[0].poolId}`}
         className="mt-6 inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         View position
@@ -72,4 +73,3 @@ function Metric({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

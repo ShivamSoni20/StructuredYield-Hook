@@ -32,9 +32,9 @@ contract SYLens {
     {
         (
             uint256 depositedValue,
-            uint160 referenceSqrtPrice,
+            ,
             uint256 ptMinted,
-            uint256 ytMinted,
+            ,
             uint256 depositTimestamp,
             uint256 ilCovered,
             uint256 feesClaimed,
@@ -69,13 +69,9 @@ contract SYLens {
             estimatedFixedAPY: ptMinted == 0 ? 0 : (claimedAndCovered * 365 days * 10_000) / (ptMinted * elapsed),
             active: active
         });
-
-        ytMinted;
-        referenceSqrtPrice;
     }
 
     function getPoolTokens(bytes32 poolId) external view returns (address ptToken, address ytToken) {
         (, ptToken, ytToken,,,,) = hook.pools(poolId);
     }
 }
-

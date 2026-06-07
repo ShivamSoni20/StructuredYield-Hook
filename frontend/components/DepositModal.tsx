@@ -3,19 +3,37 @@
 import { FormEvent, useState } from "react";
 import { X } from "lucide-react";
 import { useMintPTYT } from "@/hooks/useMintPTYT";
+import { DEMO_MARKETS } from "@/lib/demo";
+import { formatBps, formatCurrency, parseDepositAmount } from "@/lib/math";
 
 type Props = {
   open: boolean;
   onClose: () => void;
+  poolId?: `0x${string}`;
 };
 
-export function DepositModal({ open, onClose }: Props) {
+export function DepositModal({ open, onClose, poolId }: Props) {
   const [amount, setAmount] = useState("");
-  const [maturity, setMaturity] = useState("90");
+  const [maturityDays, setMaturityDays] = useState("90");
+  const [selectedPool, setSelectedPool] = useState<`0x${string}`>(poolId ?? DEMO_MARKETS[0].poolId);
   const [error, setError] = useState("");
-  const { deposit, isLoading, isSuccess } = useMintPTYT();
+  const { deposit, isLoading, isSuccess, hash, lastMaturityDays } = useMintPTYT();
+
+  const parsedAmount = parseDepositAmount(amount);
+  const maturityNumber = Number(maturityDays);
+  const estimatedYT = parsedAmount > 0n ? (parsedAmount * BigInt(maturityNumber)) / 365n : 0n;
+  const selectedMarket = DEMO_MARKETS.find((market) => market.poolId === selectedPool) ?? DEMO_MARKETS[0];
+  const premiumBps = BigInt(selectedMarket.premiumBps);
+  const premium = parsedAmount > 0n ? (parsedAmount * premiumBps) / 10_000n : 0n;
 
   if (!open) return null;
+
+  function resetAndClose() {
+    setAmount("");
+    setMaturityDays("90");
+    setError("");
+    onClose();
+  }
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -24,8 +42,7 @@ export function DepositModal({ open, onClose }: Props) {
       return;
     }
     setError("");
-    maturity;
-    deposit(amount);
+    deposit(amount, selectedPool, maturityNumber);
   }
 
   return (
@@ -48,8 +65,10 @@ export function DepositModal({ open, onClose }: Props) {
 
         {isSuccess ? (
           <div className="mt-6 rounded-lg border bg-secondary p-4">
-            <p className="font-medium">Position submitted</p>
-            <p className="mt-1 text-sm text-muted-foreground">Your wallet transaction confirmed. The dashboard will refresh shortly.</p>
+            <p className="font-medium">PT-LP and YT-LP minted</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Your {lastMaturityDays} day position was submitted. The dashboard will refresh shortly.
+            </p>
           </div>
         ) : null}
 
@@ -58,11 +77,13 @@ export function DepositModal({ open, onClose }: Props) {
             <label htmlFor="pool" className="text-sm font-medium">Pool</label>
             <select
               id="pool"
+              value={selectedPool}
+              onChange={(event) => setSelectedPool(event.target.value as `0x${string}`)}
               className="min-h-10 w-full rounded-md border bg-background px-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              <option>ETH / USDC</option>
-              <option>wBTC / USDC</option>
-              <option>wstETH / USDC</option>
+              {DEMO_MARKETS.map((market) => (
+                <option key={market.poolId} value={market.poolId}>{market.pair}</option>
+              ))}
             </select>
           </div>
 
@@ -90,8 +111,8 @@ export function DepositModal({ open, onClose }: Props) {
             <label htmlFor="maturity" className="text-sm font-medium">Maturity</label>
             <select
               id="maturity"
-              value={maturity}
-              onChange={(event) => setMaturity(event.target.value)}
+              value={maturityDays}
+              onChange={(event) => setMaturityDays(event.target.value)}
               className="min-h-10 w-full rounded-md border bg-background px-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="30">30 days</option>
@@ -100,10 +121,26 @@ export function DepositModal({ open, onClose }: Props) {
             </select>
           </div>
 
+          <div className="rounded-lg border bg-secondary/40 p-4 text-sm">
+            <p className="font-medium">Live preview</p>
+            <dl className="mt-3 grid gap-2">
+              <PreviewRow label="PT-LP to receive" value={formatCurrency(parsedAmount)} />
+              <PreviewRow label="YT-LP to receive" value={formatCurrency(estimatedYT)} />
+              <PreviewRow label="Estimated fixed APY" value={formatBps(selectedMarket.premiumBps)} />
+              <PreviewRow label="Insurance premium" value={formatCurrency(premium)} />
+            </dl>
+          </div>
+
+          {hash ? (
+            <p className="rounded-md border bg-secondary/40 p-3 font-mono text-xs text-muted-foreground">
+              Pending tx: {hash.slice(0, 10)}...{hash.slice(-8)}
+            </p>
+          ) : null}
+
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
               type="button"
-              onClick={onClose}
+              onClick={resetAndClose}
               className="min-h-10 rounded-md border px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               Cancel
@@ -123,3 +160,11 @@ export function DepositModal({ open, onClose }: Props) {
   );
 }
 
+function PreviewRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="font-mono font-semibold">{value}</dd>
+    </div>
+  );
+}

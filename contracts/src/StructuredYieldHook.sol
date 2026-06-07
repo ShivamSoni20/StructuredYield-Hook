@@ -39,6 +39,7 @@ contract StructuredYieldHook {
     InsuranceVault public immutable insuranceVault;
     VolatilityOracle public immutable volatilityOracle;
     YieldAccounting public immutable yieldAccounting;
+    address public immutable owner;
 
     mapping(bytes32 => PoolConfig) public pools;
     mapping(bytes32 => mapping(address => LPPosition)) public positions;
@@ -56,11 +57,18 @@ contract StructuredYieldHook {
     error PositionNotActive();
     error PositionMatured();
     error PositionNotMatured();
+    error NotOwner();
 
     constructor() {
+        owner = msg.sender;
         insuranceVault = new InsuranceVault(address(this));
         volatilityOracle = new VolatilityOracle(address(this));
         yieldAccounting = new YieldAccounting(address(this));
+    }
+
+    modifier onlyOwner() {
+        if (msg.sender != owner) revert NotOwner();
+        _;
     }
 
     function initializePool(bytes32 poolId, uint256 maturityTimestamp) public returns (address ptToken, address ytToken) {
@@ -214,7 +222,7 @@ contract StructuredYieldHook {
         insuranceVault.fund(poolId, amount);
     }
 
-    function updateVolatility(bytes32 poolId, uint256 volatilityBps) external {
+    function updateVolatility(bytes32 poolId, uint256 volatilityBps) external onlyOwner {
         PoolConfig storage pool = pools[poolId];
         if (!pool.initialized) revert PoolNotInitialized();
 

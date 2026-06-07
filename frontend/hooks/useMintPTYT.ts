@@ -1,14 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { DEFAULT_POOL_ID, DEFAULT_SQRT_PRICE, SY_ROUTER } from "@/lib/contracts";
 import { parseDepositAmount } from "@/lib/math";
 
 export function useMintPTYT() {
+  const [lastMaturityDays, setLastMaturityDays] = useState(90);
   const { data: hash, error, isPending, writeContract } = useWriteContract();
   const receipt = useWaitForTransactionReceipt({ hash });
 
-  function deposit(amount: string, poolId: `0x${string}` = DEFAULT_POOL_ID) {
+  function deposit(amount: string, poolId: `0x${string}` = DEFAULT_POOL_ID, maturityDays = 90) {
+    const selectedMaturityDays = Math.max(1, maturityDays);
+    setLastMaturityDays(selectedMaturityDays);
+
     writeContract({
       ...SY_ROUTER,
       functionName: "depositAndMint",
@@ -21,7 +26,7 @@ export function useMintPTYT() {
     error,
     hash,
     isLoading: isPending || receipt.isLoading,
+    lastMaturityDays,
     isSuccess: receipt.isSuccess
   };
 }
-
