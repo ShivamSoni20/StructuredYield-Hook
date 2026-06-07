@@ -119,9 +119,9 @@ export function ConnectWallet({
             <button
               type="button"
               onClick={openChainModal}
-              className="inline-flex min-h-10 items-center justify-center rounded-full bg-red-500 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-[#f87171]/30 bg-[#f87171]/10 px-5 py-2 text-sm font-semibold text-[#f87171] transition hover:bg-[#f87171]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f87171]/40"
             >
-              Wrong network
+              Switch to Unichain Sepolia
             </button>
           );
         }

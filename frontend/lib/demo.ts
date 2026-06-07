@@ -9,7 +9,7 @@ export type DemoPosition = PositionView & {
 
 export const DEMO_POSITIONS: DemoPosition[] = [
   {
-    poolId: "0x1111111111111111111111111111111111111111111111111111111111111111",
+    poolId: "0x68e0465db415eaa3b5192042dc86918f2f1d06dbfdf937be0fbccebe843f47eb",
     poolName: "ETH / USDC",
     ptBalance: 50_000n * 10n ** 18n,
     ytBalance: 12_328n * 10n ** 18n,

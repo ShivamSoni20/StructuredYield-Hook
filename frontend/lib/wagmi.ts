@@ -1,19 +1,29 @@
 ﻿"use client";
 
-import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { QueryClient } from "@tanstack/react-query";
-import { http } from "wagmi";
+import { createConfig, http } from "wagmi";
 import { baseSepolia, foundry, unichainSepolia } from "wagmi/chains";
+import { injected } from "wagmi/connectors";
 
-export const queryClient = new QueryClient();
-
-export const wagmiConfig = getDefaultConfig({
-  appName: "StructuredYield Hook",
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "structuredyield-local-dev",
-  chains: [foundry, baseSepolia, unichainSepolia],
-  transports: {
-    [foundry.id]: http(),
-    [baseSepolia.id]: http(),
-    [unichainSepolia.id]: http("https://sepolia.unichain.org")
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      gcTime: 5 * 60 * 1000,
+      staleTime: 30_000
+    }
   }
+});
+
+const chains = [unichainSepolia, foundry, baseSepolia] as const;
+const transports = {
+  [foundry.id]: http(),
+  [baseSepolia.id]: http(),
+  [unichainSepolia.id]: http("https://sepolia.unichain.org")
+};
+
+export const wagmiConfig = createConfig({
+  chains,
+  connectors: [injected({ shimDisconnect: true })],
+  transports,
+  ssr: true
 });

@@ -57,7 +57,7 @@ Implemented:
   - mechanism
   - hook-points
   - CTA
-- Removed the extra **Open App** button from the landing nav.
+- Landing nav shows **Connect Wallet** when disconnected and **Open App** only after a wallet is connected.
 - Wallet connection uses RainbowKit + Wagmi.
 - Connect flow redirects connected users to `/dashboard`.
 - Dashboard is wallet-protected.
@@ -90,7 +90,7 @@ Implemented:
 
 - `schema.graphql` entities for positions, fee routes, IL coverage, and position closures.
 - `mappings.ts` handlers for major hook events.
-- `subgraph.yaml` configured for Unichain Sepolia with `startBlock: 0` until the actual deployment block is finalized.
+- `subgraph.yaml` configured for Unichain Sepolia with the deployed hook address and approximate deployment `startBlock: 5000000`.
 
 ### Docs
 
@@ -174,31 +174,39 @@ When deployed contracts are unavailable or reads fail, the frontend uses demo po
 
 This lets the UI remain demoable without requiring all contracts/subgraph data to be live.
 
-## Swap Status
+## Swap and Fee Integration Status
 
-### Are real Uniswap V4 swaps fully working?
+### What works in scaffold mode
 
-**Not fully yet.**
+The scaffold flow is working end-to-end:
 
-The project has hook/accounting logic for `afterSwap`, and the V4 adapter implements the `afterSwap` callback surface. However, a production-grade live swap path through a real V4 `PoolManager` is **not fully verified** yet.
+- `SYRouter.depositAndMint` calls the hook and mints PT/YT.
+- `hook.afterSwap(poolId, feeAmount, sqrtPrice)` routes fees 80/20 to YT holders and the insurance reserve.
+- `SYRouter.claimFees` claims accrued YT fees.
+- `SYRouter.removeAndRedeem` covers IL from the vault, burns PT/YT, and closes the position.
 
-Current status:
+The Foundry test suite covers this lifecycle, including fee routing, IL coverage, and maturity redemption.
 
-- Scaffold fee routing works through direct hook/accounting calls and tests.
-- The V4 adapter exists, but real PoolManager settlement and swap testing still need final integration.
-- `StructuredYieldV4Hook` must be deployed to an address with correct Uniswap V4 hook permission bits.
-- `MineHookAddress.s.sol` documents the required CREATE2 permission-bit mining helper path.
-- The frontend does not yet perform live Uniswap swaps for YT-LP; trade UI currently communicates demo/scaffold status.
+### V4 PoolManager integration status
 
-### Can Uniswap route through this hook natively?
+`StructuredYieldV4Hook` implements the `IHooks` interface with the enabled lifecycle callbacks:
 
-**No for the current scaffold submission.**
+- `afterInitialize` initializes PT/YT lifecycle state for the V4 pool.
+- `beforeAddLiquidity` mints PT/YT from hook data.
+- `afterSwap` routes fees from swap deltas into accounting.
+- `beforeRemoveLiquidity` performs maturity-time IL coverage.
+- `afterRemoveLiquidity` settles, burns PT/YT, and closes the position.
 
-Reasons:
+The V4 adapter is implemented. The remaining production hardening steps are:
 
-- The router uses direct hook calls in scaffold mode.
-- V4 hook address permission-bit mining is documented but not completed as a production deployment.
-- The current demo is dependency-light and not a finalized PoolManager-native liquidity/swap path.
+1. Mine a CREATE2 address with the correct Uniswap V4 permission bits, documented in `contracts/script/MineHookAddress.s.sol`.
+2. Run fork tests against a live V4 PoolManager deployment.
+
+`SYRouter.isScaffoldMode` guards the direct-call path and rejects production-style direct calls when scaffold mode is disabled.
+
+### Current deployment
+
+Contracts are deployed on Unichain Sepolia. The demo pool is live and accepts scaffold deposits through the frontend/router flow.
 
 ## Known Limitations
 
@@ -207,7 +215,7 @@ Reasons:
 - Live V4 hook deployment needs CREATE2 address mining for permission bits.
 - YT transferability needs more fee ownership/snapshot work before production.
 - `sqrtPrice` is still passed through scaffold/demo paths instead of fully pulled from PoolManager state everywhere.
-- Subgraph deployment still needs the final deployed contract address and deployment block.
+- Subgraph deployment uses the real hook address and an approximate start block; replace with the exact creation block before Graph Studio deployment.
 - Slither and Foundry should be rerun in an environment with all tools installed before final submission.
 
 ## Validation Status

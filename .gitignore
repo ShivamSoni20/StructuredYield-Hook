@@ -18,3 +18,4 @@ next-dev.err.log
 !frontend/.env.example
 DEVELOPMENT_PLAN.md
 .tools/
+.playwright-mcp/

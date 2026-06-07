@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -9,7 +9,6 @@ import { FeeChart } from "@/components/FeeChart";
 import { MaturityTimeline } from "@/components/MaturityTimeline";
 import { MetricsGrid } from "@/components/MetricsGrid";
 import { PositionTable } from "@/components/PositionTable";
-import { RedeemModal } from "@/components/RedeemModal";
 import { WalletRouteGuard } from "@/components/WalletRouteGuard";
 import { YieldMeters } from "@/components/YieldMeters";
 import { DEMO_MARKETS } from "@/lib/demo";
@@ -20,7 +19,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("portfolio");
   const [depositOpen, setDepositOpen] = useState(false);
-  const [redeemOpen, setRedeemOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   return (
     <WalletRouteGuard>
@@ -39,8 +38,11 @@ export default function DashboardPage() {
           <DashboardSidebar
             activeTab={activeTab}
             onTabChange={(tab) => {
+              if (tab === "redeem") {
+                router.push("/positions");
+                return;
+              }
               setActiveTab(tab);
-              if (tab === "redeem") setRedeemOpen(true);
             }}
             onNewPosition={() => setDepositOpen(true)}
             onBackHome={() => router.push("/")}
@@ -76,8 +78,23 @@ export default function DashboardPage() {
           </section>
         </div>
 
-        <DepositModal open={depositOpen} onClose={() => setDepositOpen(false)} />
-        <RedeemModal open={redeemOpen} onClose={() => setRedeemOpen(false)} poolId={DEMO_MARKETS[0].poolId} />
+        <DepositModal
+          open={depositOpen}
+          onClose={() => setDepositOpen(false)}
+          onSuccess={() => {
+            setToast({ message: "PT-LP and YT-LP minted successfully!", type: "success" });
+            window.setTimeout(() => setToast(null), 4000);
+          }}
+        />
+        {toast ? (
+          <div
+            className={`fixed bottom-6 left-1/2 z-[200] -translate-x-1/2 rounded-xl px-5 py-3 text-sm font-semibold shadow-2xl ${
+              toast.type === "success" ? "bg-[#4ade80] text-[#052e16]" : "bg-[#f87171] text-[#450a0a]"
+            }`}
+          >
+            {toast.message}
+          </div>
+        ) : null}
       </main>
     </WalletRouteGuard>
   );

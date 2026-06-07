@@ -1,9 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useAccount } from "wagmi";
 import { ConnectWallet } from "@/components/ConnectWallet";
 
 export function Nav() {
+  const router = useRouter();
+  const { isConnected } = useAccount();
+
+  useEffect(() => {
+    if (isConnected) router.replace("/dashboard");
+  }, [isConnected, router]);
+
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#0a0b0d]/85 backdrop-blur-xl">
       <nav className="mx-auto flex h-[60px] max-w-7xl items-center justify-between gap-4 px-4 md:px-8">
@@ -18,7 +28,9 @@ export function Nav() {
           <a href="#mechanism" className="transition hover:text-white">Mechanism</a>
           <a href="#hooks" className="transition hover:text-white">Hook Points</a>
         </div>
-        <ConnectWallet redirectOnConnect />
+        <div className="flex items-center gap-3">
+          <ConnectWallet redirectOnConnect />
+        </div>
       </nav>
     </header>
   );

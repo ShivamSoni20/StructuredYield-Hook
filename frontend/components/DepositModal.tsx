@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useMintPTYT } from "@/hooks/useMintPTYT";
 import { DEMO_MARKETS } from "@/lib/demo";
@@ -10,9 +10,10 @@ type Props = {
   open: boolean;
   onClose: () => void;
   poolId?: `0x${string}`;
+  onSuccess?: () => void;
 };
 
-export function DepositModal({ open, onClose, poolId }: Props) {
+export function DepositModal({ open, onClose, poolId, onSuccess }: Props) {
   const [amount, setAmount] = useState("");
   const [maturityDays, setMaturityDays] = useState("90");
   const [selectedPool, setSelectedPool] = useState<`0x${string}`>(poolId ?? DEMO_MARKETS[0].poolId);
@@ -25,6 +26,10 @@ export function DepositModal({ open, onClose, poolId }: Props) {
   const selectedMarket = DEMO_MARKETS.find((market) => market.poolId === selectedPool) ?? DEMO_MARKETS[0];
   const premiumBps = BigInt(selectedMarket.premiumBps);
   const premium = parsedAmount > 0n ? (parsedAmount * premiumBps) / 10_000n : 0n;
+
+  useEffect(() => {
+    if (isSuccess) onSuccess?.();
+  }, [isSuccess, onSuccess]);
 
   if (!open) return null;
 
