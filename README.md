@@ -130,9 +130,9 @@ npm run dev
 Optional deployment variables:
 
 ```bash
-NEXT_PUBLIC_STRUCTURED_YIELD_HOOK=0x03FBa520D28659c9CA074cD39d0c43CB40C00537
-NEXT_PUBLIC_SY_ROUTER=0xaCAb5Ce99eA648bBB5FF451B0094625dfbDbd53E
-NEXT_PUBLIC_SY_LENS=0x5497ebcdaDC01928bBdbbBF376265A3713b68B26
+NEXT_PUBLIC_STRUCTURED_YIELD_HOOK=0x7d68F662E056706476A04AD9CFca3740CaaeDb40
+NEXT_PUBLIC_SY_ROUTER=0x6bd6903B652a2E37Fc189e7b3a1DEa2d6Bb77D63
+NEXT_PUBLIC_SY_LENS=0x6866ba266A127c13a2A6DD5877f7F229a75886c9
 NEXT_PUBLIC_CHAIN_ID=1301
 ```
 
@@ -142,7 +142,7 @@ The root `index.html` is the canonical static UI mockup. The Next app serves the
 
 ## Local Deployment
 
-The repository is not yet adapted to real Uniswap V4 `BaseHook` imports, so local deployment currently targets the dependency-light contract scaffold.
+The repository supports both the original dependency-light scaffold and the production V4 path. Scaffold mode is still useful for local demos; production mode routes liquidity and swaps through Uniswap V4 `PoolManager`.
 
 After installing Foundry:
 
@@ -160,7 +160,7 @@ cd contracts
 forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
 ```
 
-The current deployment scripts deploy and initialize the dependency-light scaffold. Final testnet deployment still requires Foundry plus Uniswap V4 dependency integration.
+The default `SCAFFOLD_MODE=true` deployment preserves the dependency-light demo flow.
 
 Create a demo pool after deploying:
 
@@ -177,26 +177,32 @@ Network details:
 - Chain ID: `1301`
 - RPC: `https://sepolia.unichain.org`
 - Explorer: `https://unichain-sepolia.blockscout.com`
+- V4 `PoolManager`: `0x00B036B58a818B1BC34d502D3fE730Db729e62AC`
+- V4 `UniversalRouter`: `0xf70536B3bcC1bD1a972dc186A2cf84cC6da6Be5D`
+- V4 `PositionManager`: `0xf969Aee60879C54bAAed9F3eD26147Db216Fd664`
+- V4 `StateView`: `0xc199F1072a74D4e905ABa1A84d9a45E2546B6222`
 
 Current verified deployment:
 
 | Contract | Address |
 |---|---|
-| `StructuredYieldHook` | `0x03FBa520D28659c9CA074cD39d0c43CB40C00537` |
-| `SYRouter` | `0xaCAb5Ce99eA648bBB5FF451B0094625dfbDbd53E` |
-| `SYLens` | `0x5497ebcdaDC01928bBdbbBF376265A3713b68B26` |
-| `InsuranceVault` | `0x828E60F2946d7D9a33627b25958072d639fF8174` |
-| `VolatilityOracle` | `0x577E46CcD27647aC7854b08A4cA268f1F5581bdA` |
-| `YieldAccounting` | `0x63a8fA11Fc4708Fe2e8934f955dCc226E887E922` |
+| `StructuredYieldHook` | `0x7d68F662E056706476A04AD9CFca3740CaaeDb40` |
+| `SYRouter` | `0x6bd6903B652a2E37Fc189e7b3a1DEa2d6Bb77D63` |
+| `SYLens` | `0x6866ba266A127c13a2A6DD5877f7F229a75886c9` |
+| `InsuranceVault` | `0xe948E1EbEa6bff1cA9ED2b4552D2AA3463bc1f5D` |
+| `VolatilityOracle` | `0x7a974055Bf12972c21E99040e4F77e0963a27904` |
+| `YieldAccounting` | `0x0E574050055A9cb5c916a4D68e495DB48DC96900` |
 
-Demo pool:
+Real V4 pool:
 
 | Item | Value |
 |---|---|
-| Pool ID | `0x68e0465db415eaa3b5192042dc86918f2f1d06dbfdf937be0fbccebe843f47eb` |
-| `PTToken` | `0xcF189F674Fc4706e0438Bb98E189b8F583e545F1` |
-| `YTToken` | `0x43dB13842f711226F2111120540AAa62A213dC41` |
+| Pool ID | `0x92b0899e642ee283b7673bfb931c1e44bb7c2a00c18cc1862d11d743dd8849e4` |
+| `PTToken` | `0x5C0a7288f5C683c41158FADDacF62Be0Aa10E1Fe` |
+| `YTToken` | `0x58531ED94d587fe232C9e536Ba82ED27371A8Efb` |
 | Maturity | 90 days from pool creation |
+| Current V4 liquidity | `1,000,000` test liquidity units |
+| Latest real swap test | `0.01 USDC` swap through `SYRouter.swapExactInputSingle` succeeded |
 
 Deploy the scaffold contracts to Unichain Sepolia:
 
@@ -214,10 +220,64 @@ forge script script/Deploy.s.sol \
   -vvvv
 ```
 
-Create a pool after deployment:
+### Real V4 PoolManager Deployment
+
+For a real V4 hook pool, run this sequence after verifying current Uniswap deployment addresses from the official Uniswap deployments page:
 
 ```bash
-STRUCTURED_YIELD_HOOK=0x03FBa520D28659c9CA074cD39d0c43CB40C00537 \
+cd contracts
+cp .env.example .env
+# fill PRIVATE_KEY in .env
+source .env
+
+forge script script/MineAndDeployV4Hook.s.sol \
+  --rpc-url unichain_sepolia \
+  --broadcast \
+  --verify \
+  --verifier blockscout \
+  --verifier-url https://unichain-sepolia.blockscout.com/api \
+  -vvvv
+```
+
+Deploy a production router pointed at the mined hook:
+
+```bash
+STRUCTURED_YIELD_HOOK=0x7d68F662E056706476A04AD9CFca3740CaaeDb40 \
+SCAFFOLD_MODE=false \
+forge script script/Deploy.s.sol \
+  --rpc-url unichain_sepolia \
+  --broadcast \
+  --verify \
+  --verifier blockscout \
+  --verifier-url https://unichain-sepolia.blockscout.com/api \
+  -vvvv
+```
+
+Initialize the real V4 pool:
+
+```bash
+V4_HOOK_ADDRESS=0x7d68F662E056706476A04AD9CFca3740CaaeDb40 \
+forge script script/InitializeV4Pool.s.sol \
+  --rpc-url unichain_sepolia \
+  --broadcast \
+  -vvvv
+```
+
+Trigger a test swap through `SYRouter.swapExactInputSingle`, which calls `PoolManager.swap` inside the required unlock callback and fires `StructuredYieldV4Hook.afterSwap`:
+
+```bash
+V4_HOOK_ADDRESS=0x7d68F662E056706476A04AD9CFca3740CaaeDb40 \
+SY_ROUTER=0x6bd6903B652a2E37Fc189e7b3a1DEa2d6Bb77D63 \
+forge script script/TriggerTestSwap.s.sol \
+  --rpc-url unichain_sepolia \
+  --broadcast \
+  -vvvv
+```
+
+Create a scaffold pool after deployment, only if you are running the old dependency-light demo path:
+
+```bash
+STRUCTURED_YIELD_HOOK=0x7d68F662E056706476A04AD9CFca3740CaaeDb40 \
 forge script script/CreatePool.s.sol \
   --rpc-url unichain_sepolia \
   --broadcast \
@@ -228,7 +288,7 @@ On Windows PowerShell with the local Foundry binary:
 
 ```powershell
 cd contracts
-$env:STRUCTURED_YIELD_HOOK="0x03FBa520D28659c9CA074cD39d0c43CB40C00537"
+$env:STRUCTURED_YIELD_HOOK="0x7d68F662E056706476A04AD9CFca3740CaaeDb40"
 & "..\.tools\foundry\forge.exe" script script/CreatePool.s.sol --rpc-url unichain_sepolia --broadcast --private-key $env:PRIVATE_KEY -vvvv
 ```
 
@@ -238,18 +298,32 @@ Frontend environment:
 cd frontend
 cp .env.example .env.local
 # or create .env.local manually:
-NEXT_PUBLIC_STRUCTURED_YIELD_HOOK=0x03FBa520D28659c9CA074cD39d0c43CB40C00537
-NEXT_PUBLIC_SY_ROUTER=0xaCAb5Ce99eA648bBB5FF451B0094625dfbDbd53E
-NEXT_PUBLIC_SY_LENS=0x5497ebcdaDC01928bBdbbBF376265A3713b68B26
+NEXT_PUBLIC_STRUCTURED_YIELD_HOOK=0x7d68F662E056706476A04AD9CFca3740CaaeDb40
+NEXT_PUBLIC_V4_HOOK_ADDRESS=0x7d68F662E056706476A04AD9CFca3740CaaeDb40
+NEXT_PUBLIC_SY_ROUTER=0x6bd6903B652a2E37Fc189e7b3a1DEa2d6Bb77D63
+NEXT_PUBLIC_SY_LENS=0x6866ba266A127c13a2A6DD5877f7F229a75886c9
+NEXT_PUBLIC_REAL_POOL_ID=0x92b0899e642ee283b7673bfb931c1e44bb7c2a00c18cc1862d11d743dd8849e4
 NEXT_PUBLIC_CHAIN_ID=1301
 ```
 
-Manual demo flow:
+Manual real V4 demo flow:
 
 1. Start the frontend with `npm run dev`.
 2. Connect MetaMask to Unichain Sepolia.
 3. Use RPC `https://sepolia.unichain.org` and chain ID `1301`.
-4. Test the scaffold flow: deposit, route swap fees, claim fees, then redeem at maturity.
+4. Add WETH/USDC liquidity through `SYRouter.addLiquidityToPool`, then trigger swaps through `SYRouter.swapExactInputSingle`, claim routed fees, and redeem after maturity.
+
+Live integration proof:
+
+| Action | Transaction |
+|---|---|
+| Wrap test ETH to WETH | `0x751e5c62046d2f8a332c811995bd83e0a63c12585e6f3545f1d79b4eac9e6bad` |
+| Approve WETH to `SYRouter` | `0xac361b8f8965b5e01667fc603d99a53ca72e6abe8a21b77ac1ba139f33210c10` |
+| Approve USDC to `SYRouter` | `0xd0c6507659f366a54a70bf1fad89080d1af6555ed79fda13c3acbfa0a662a68b` |
+| Add real V4 liquidity | `0x3d3170c502e36cc7ad092695107ad85d32b42fd9b59cffaad776849d8b749680` |
+| Real V4 swap / `afterSwap` fee routing | `0xda4cd759a5f9d75287e193d965600eef6f3f873ca0b16cf2069cb888f58d09fb` |
+
+The live swap emitted the V4 `Swap` event, called `StructuredYieldV4Hook.afterSwap`, accrued `24` fee units to YT holders, and routed `6` fee units to the insurance reserve.
 
 ## Demo
 
@@ -312,10 +386,10 @@ Current local scan completed with no Critical/High-labeled findings in the outpu
 ## Roadmap
 
 - Install Foundry and Slither locally.
-- Adapt `StructuredYieldHook` to real Uniswap V4 `BaseHook` callbacks using `docs/UNISWAP_V4_MIGRATION.md`.
+- Run the new Unichain Sepolia V4 fork tests with `UNICHAIN_SEPOLIA_RPC_URL=https://sepolia.unichain.org forge test --match-contract V4IntegrationTest -vvvv`.
 - Run Slither and gas snapshots.
 - Deploy to Base Sepolia or Unichain testnet.
 
 ## Notes
 
-The current hook remains dependency-light so the product mechanics can be developed before pulling in full Uniswap V4 packages. The next contract milestone is adapting `StructuredYieldHook.sol` to real `BaseHook` callback signatures after installing Foundry and Uniswap V4 dependencies.
+The current code keeps scaffold mode for demos while adding a production `PoolManager` path for real V4 liquidity and swaps. Real token custody in `InsuranceVault` remains a mainnet-hardening task.

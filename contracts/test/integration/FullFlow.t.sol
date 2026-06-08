@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
+import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import {StructuredYieldHook} from "../../src/StructuredYieldHook.sol";
 import {SYRouter} from "../../src/periphery/SYRouter.sol";
 import {PTToken} from "../../src/tokens/PTToken.sol";
@@ -18,7 +19,7 @@ contract FullFlowTest is Test {
 
     function setUp() public {
         hook = new StructuredYieldHook();
-        router = new SYRouter(hook, true);
+        router = new SYRouter(hook, IPoolManager(address(0)), true);
     }
 
     function testDepositSwapMatureRedeemFlow() public {

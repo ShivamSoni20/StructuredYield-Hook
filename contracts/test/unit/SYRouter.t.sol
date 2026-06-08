@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
+import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import {StructuredYieldHook} from "../../src/StructuredYieldHook.sol";
 import {SYRouter} from "../../src/periphery/SYRouter.sol";
 import {PTToken} from "../../src/tokens/PTToken.sol";
@@ -15,7 +16,7 @@ contract SYRouterTest is Test {
 
     function setUp() public {
         hook = new StructuredYieldHook();
-        router = new SYRouter(hook, true);
+        router = new SYRouter(hook, IPoolManager(address(0)), true);
     }
 
     function testDepositAndMintUsesSenderAsLP() public {
@@ -42,7 +43,9 @@ contract SYRouterTest is Test {
     }
 
     function testProductionModeRejectsScaffoldEntrypoints() public {
-        SYRouter productionRouter = new SYRouter(hook, false);
+        SYRouter productionRouter = new SYRouter(hook, IPoolManager(address(0xBEEF)), false);
+
+        vm.expectRevert(SYRouter.ScaffoldOnlyOperation.selector);
         productionRouter.initializePool(poolId, block.timestamp + 30 days);
 
         vm.expectRevert(SYRouter.ProductionPoolManagerRequired.selector);

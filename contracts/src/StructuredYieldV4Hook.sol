@@ -101,12 +101,12 @@ contract StructuredYieldV4Hook is StructuredYieldHook, IHooks {
     function afterSwap(
         address,
         PoolKey calldata key,
-        IPoolManager.SwapParams calldata,
+        IPoolManager.SwapParams calldata params,
         BalanceDelta delta,
         bytes calldata hookData
     ) external returns (bytes4, int128) {
         uint160 currentSqrtPrice = hookData.length >= 32 ? abi.decode(hookData, (uint160)) : 0;
-        uint256 feeAmount = _absoluteDeltaValue(delta);
+        uint256 feeAmount = _estimateFeeAmount(key, params, delta);
         super.afterSwap(_poolId(key), feeAmount, currentSqrtPrice);
         return (IHooks.afterSwap.selector, 0);
     }
@@ -151,6 +151,21 @@ contract StructuredYieldV4Hook is StructuredYieldHook, IHooks {
 
     function _abs(int128 amount) internal pure returns (uint256) {
         return amount < 0 ? uint256(uint128(-amount)) : uint256(uint128(amount));
+    }
+
+    function _estimateFeeAmount(PoolKey calldata key, IPoolManager.SwapParams calldata params, BalanceDelta delta)
+        internal
+        pure
+        returns (uint256)
+    {
+        uint256 fee = uint256(key.fee);
+        if (fee == 0) return 0;
+
+        uint256 inputAmount = params.zeroForOne
+            ? _abs(BalanceDeltaLibrary.amount0(delta))
+            : _abs(BalanceDeltaLibrary.amount1(delta));
+
+        return (inputAmount * fee) / 1_000_000;
     }
 
     function _poolId(PoolKey calldata key) internal pure returns (bytes32) {

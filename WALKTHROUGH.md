@@ -30,9 +30,11 @@ Implemented:
 - `InsuranceVault.sol` scaffold reserve ledger with capped payout.
 - `YieldAccounting.sol` cumulative fee-index accounting.
 - `VolatilityOracle.sol`, `ILMath.sol`, `PremiumMath.sol`, `FixedPointMath.sol`.
-- `SYRouter.sol` scaffold router with an explicit `isScaffoldMode` guard.
+- `SYRouter.sol` scaffold router with an explicit `isScaffoldMode` guard plus production V4 `PoolManager.unlock` flows for liquidity and swap settlement.
 - `SYLens.sol` frontend position view aggregator.
-- `MineHookAddress.s.sol` helper notes for V4 hook permission-bit mining.
+- `MineAndDeployV4Hook.s.sol` mines/deploys the V4 hook at a permission-bit-compatible address.
+- `InitializeV4Pool.s.sol` initializes the real Unichain Sepolia V4 pool.
+- `TriggerTestSwap.s.sol` submits a production-router swap that triggers `afterSwap`.
 
 Recent fixes:
 
@@ -43,6 +45,7 @@ Recent fixes:
 - Fixed volatility delta denominator behavior.
 - Fixed premium reserve-ratio math.
 - Added tests for fee claim/remove accounting paths.
+- Added a V4 fork test scaffold for hook mining, pool initialization, real modify-liquidity, and real swap fee routing.
 
 ### Frontend
 
@@ -114,27 +117,31 @@ Deployed contracts:
 
 | Contract | Address |
 |---|---|
-| StructuredYieldHook | `0x03FBa520D28659c9CA074cD39d0c43CB40C00537` |
-| SYRouter | `0xaCAb5Ce99eA648bBB5FF451B0094625dfbDbd53E` |
-| SYLens | `0x5497ebcdaDC01928bBdbbBF376265A3713b68B26` |
-| InsuranceVault | `0x828E60F2946d7D9a33627b25958072d639fF8174` |
-| VolatilityOracle | `0x577E46CcD27647aC7854b08A4cA268f1F5581bdA` |
-| YieldAccounting | `0x63a8fA11Fc4708Fe2e8934f955dCc226E887E922` |
+| StructuredYieldHook | `0x7d68F662E056706476A04AD9CFca3740CaaeDb40` |
+| SYRouter | `0x6bd6903B652a2E37Fc189e7b3a1DEa2d6Bb77D63` |
+| SYLens | `0x6866ba266A127c13a2A6DD5877f7F229a75886c9` |
+| InsuranceVault | `0xe948E1EbEa6bff1cA9ED2b4552D2AA3463bc1f5D` |
+| VolatilityOracle | `0x7a974055Bf12972c21E99040e4F77e0963a27904` |
+| YieldAccounting | `0x0E574050055A9cb5c916a4D68e495DB48DC96900` |
 
-Demo pool:
+Real V4 pool:
 
 | Item | Value |
 |---|---|
-| Pool ID | `0x68e0465db415eaa3b5192042dc86918f2f1d06dbfdf937be0fbccebe843f47eb` |
-| PTToken | `0xcF189F674Fc4706e0438Bb98E189b8F583e545F1` |
-| YTToken | `0x43dB13842f711226F2111120540AAa62A213dC41` |
+| Pool ID | `0x92b0899e642ee283b7673bfb931c1e44bb7c2a00c18cc1862d11d743dd8849e4` |
+| PTToken | `0x5C0a7288f5C683c41158FADDacF62Be0Aa10E1Fe` |
+| YTToken | `0x58531ED94d587fe232C9e536Ba82ED27371A8Efb` |
+| Current V4 liquidity | `1,000,000` test liquidity units |
+| Latest real swap test | `0.01 USDC` swap through `SYRouter.swapExactInputSingle` succeeded |
 
 Frontend env values:
 
 ```bash
-NEXT_PUBLIC_STRUCTURED_YIELD_HOOK=0x03FBa520D28659c9CA074cD39d0c43CB40C00537
-NEXT_PUBLIC_SY_ROUTER=0xaCAb5Ce99eA648bBB5FF451B0094625dfbDbd53E
-NEXT_PUBLIC_SY_LENS=0x5497ebcdaDC01928bBdbbBF376265A3713b68B26
+NEXT_PUBLIC_STRUCTURED_YIELD_HOOK=0x7d68F662E056706476A04AD9CFca3740CaaeDb40
+NEXT_PUBLIC_V4_HOOK_ADDRESS=0x7d68F662E056706476A04AD9CFca3740CaaeDb40
+NEXT_PUBLIC_SY_ROUTER=0x6bd6903B652a2E37Fc189e7b3a1DEa2d6Bb77D63
+NEXT_PUBLIC_SY_LENS=0x6866ba266A127c13a2A6DD5877f7F229a75886c9
+NEXT_PUBLIC_REAL_POOL_ID=0x92b0899e642ee283b7673bfb931c1e44bb7c2a00c18cc1862d11d743dd8849e4
 NEXT_PUBLIC_CHAIN_ID=1301
 ```
 
@@ -193,28 +200,53 @@ The Foundry test suite covers this lifecycle, including fee routing, IL coverage
 
 - `afterInitialize` initializes PT/YT lifecycle state for the V4 pool.
 - `beforeAddLiquidity` mints PT/YT from hook data.
-- `afterSwap` routes fees from swap deltas into accounting.
+- `afterSwap` estimates fee routing from the input-side swap delta and the V4 pool fee.
 - `beforeRemoveLiquidity` performs maturity-time IL coverage.
 - `afterRemoveLiquidity` settles, burns PT/YT, and closes the position.
 
-The V4 adapter is implemented. The remaining production hardening steps are:
+The V4 adapter and production router path are implemented:
 
-1. Mine a CREATE2 address with the correct Uniswap V4 permission bits, documented in `contracts/script/MineHookAddress.s.sol`.
-2. Run fork tests against a live V4 PoolManager deployment.
+- `MineAndDeployV4Hook.s.sol` mines a CREATE2 salt for the required V4 hook permission bits.
+- `InitializeV4Pool.s.sol` initializes the real Unichain Sepolia V4 pool through `PoolManager.initialize`.
+- `SYRouter.addLiquidityToPool` calls `PoolManager.modifyLiquidity` inside the required unlock callback and passes LP/deposit metadata as hook data.
+- `SYRouter.swapExactInputSingle` calls `PoolManager.swap` inside the required unlock callback, so `StructuredYieldV4Hook.afterSwap` fires from a real V4 swap.
+- `SYRouter.removeLiquidityFromPool` removes V4 liquidity and triggers the maturity-time PT/YT settlement flow.
 
-`SYRouter.isScaffoldMode` guards the direct-call path and rejects production-style direct calls when scaffold mode is disabled.
+`SYRouter.isScaffoldMode` still guards the old direct-call path and rejects scaffold direct calls when production mode is disabled.
 
 ### Current deployment
 
-Contracts are deployed on Unichain Sepolia. The demo pool is live and accepts scaffold deposits through the frontend/router flow.
+The real V4 hook, production router, lens, and WETH/USDC hook pool are deployed on Unichain Sepolia. The pool is initialized through Uniswap V4 `PoolManager` and has `1,000,000` test liquidity units. A live `0.01 USDC` swap through `SYRouter.swapExactInputSingle` succeeded, emitted the V4 `Swap` event, called `StructuredYieldV4Hook.afterSwap`, accrued `24` fee units to YT holders, and routed `6` fee units to the insurance reserve.
+
+Live integration proof:
+
+| Action | Transaction |
+|---|---|
+| Wrap test ETH to WETH | `0x751e5c62046d2f8a332c811995bd83e0a63c12585e6f3545f1d79b4eac9e6bad` |
+| Approve WETH to `SYRouter` | `0xac361b8f8965b5e01667fc603d99a53ca72e6abe8a21b77ac1ba139f33210c10` |
+| Approve USDC to `SYRouter` | `0xd0c6507659f366a54a70bf1fad89080d1af6555ed79fda13c3acbfa0a662a68b` |
+| Add real V4 liquidity | `0x3d3170c502e36cc7ad092695107ad85d32b42fd9b59cffaad776849d8b749680` |
+| Real V4 swap / `afterSwap` fee routing | `0xda4cd759a5f9d75287e193d965600eef6f3f873ca0b16cf2069cb888f58d09fb` |
+
+### RfH Alignment
+
+The pasted Request for Hooks page maps to the current StructuredYield implementation in these working areas:
+
+- **UHI9 Impermanent Loss & Yield Systems**: the hook packages LP exposure into PT/YT-style positions, accrues fee yield to YT holders, and uses the insurance reserve for IL coverage.
+- **Unichain Tokenized Strategies/Yield-Bearing Tokens**: the live deployment runs on Unichain Sepolia and tokenizes AMM liquidity with PT/YT lifecycle tokens.
+- **Uniswap Ecosystem IL Insurance Hooks**: premium, vault reserve accounting, maturity redemption, and IL payout paths are implemented in the hook scaffold and V4 adapter.
+- **Real V4 PoolManager Integration**: liquidity and swaps go through `PoolManager.unlock`, `modifyLiquidity`, and `swap`, not direct mock callbacks.
+
+Not implemented from the pasted RfH page: Across cross-chain bridging, Reactive Network contracts, Chainlink Functions/Automation, Fhenix FHE, EigenLayer AVS, Brevis ZK proofs, Ink permissioning, and Arbitrum Stylus ports. Those are separate sponsor tracks and would require additional contracts, deployments, credentials, and test flows beyond the current StructuredYield UHI9/Unichain integration.
 
 ## Known Limitations
 
 - `InsuranceVault` currently uses accounting reserves and does not custody real USDC/WETH/ETH.
 - Real token custody must be added to `fund()` and `payout()` before production use.
-- Live V4 hook deployment needs CREATE2 address mining for permission bits.
+- Live V4 hook deployment uses CREATE2 mining scripts, and the current mined hook/router/pool IDs are saved in this walkthrough and frontend env.
+- Real V4 liquidity requires ERC-20 approvals to `SYRouter` before `addLiquidityToPool` or `swapExactInputSingle`.
 - YT transferability needs more fee ownership/snapshot work before production.
-- `sqrtPrice` is still passed through scaffold/demo paths instead of fully pulled from PoolManager state everywhere.
+- `sqrtPrice` is still passed through frontend/router calls in some paths; `StateView` reads were added but should be used everywhere before mainnet.
 - Subgraph deployment uses the real hook address and an approximate start block; replace with the exact creation block before Graph Studio deployment.
 - Slither and Foundry should be rerun in an environment with all tools installed before final submission.
 
@@ -227,8 +259,8 @@ Frontend:
 
 Contracts:
 
-- Previous local Foundry runs had the test suite passing.
-- In the current shell, `forge` is not installed/available, so contract tests could not be rerun here.
+- Local Foundry build passes with the bundled `.tools/foundry/forge.exe`.
+- Local Foundry tests pass with the bundled `.tools/foundry/forge.exe`.
 
 Server:
 
@@ -292,7 +324,7 @@ forge script script/CreatePool.s.sol \
 
 1. Run Foundry tests in an environment where `forge` is installed.
 2. Mine and deploy `StructuredYieldV4Hook` with correct permission bits.
-3. Add real PoolManager fork tests for add liquidity, swap, fee routing, and remove liquidity.
+3. Run Unichain Sepolia V4 fork tests for add liquidity, swap, fee routing, and remove liquidity.
 4. Add actual token custody to `InsuranceVault`.
 5. Deploy and wire the subgraph with the real contract address and start block.
 6. Replace demo fallback values with production reads once the full live integration is verified.

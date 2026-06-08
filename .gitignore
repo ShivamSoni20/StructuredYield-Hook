@@ -19,3 +19,5 @@ next-dev.err.log
 DEVELOPMENT_PLAN.md
 .tools/
 .playwright-mcp/
+.agents/
+skills-lock.json
