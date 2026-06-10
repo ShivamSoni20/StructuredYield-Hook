@@ -34,13 +34,13 @@ export default function MarketsPage() {
                 }}
                 className="min-h-10 rounded-xl bg-[#d4a853] px-5 font-semibold text-[#0a0b0d]"
               >
-                Deposit
+                Add Liquidity
               </button>
             </article>
           ))}
         </div>
       </section>
-      <DepositModal open={depositOpen} onClose={() => setDepositOpen(false)} poolId={selectedPool} />
+      <DepositModal open={depositOpen} onClose={() => setDepositOpen(false)} mode="add-liquidity" poolId={selectedPool} />
     </main>
   );
 }

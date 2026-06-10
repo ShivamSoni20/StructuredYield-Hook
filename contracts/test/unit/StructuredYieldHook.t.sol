@@ -83,6 +83,15 @@ contract StructuredYieldHookTest is Test {
         assertEq(hook.insuranceVault().reserves(poolId), 20 ether);
     }
 
+    function testCannotOverwriteActivePosition() public {
+        uint256 maturity = block.timestamp + 90 days;
+        hook.initializePool(poolId, maturity);
+        hook.beforeAddLiquidity(poolId, lp, 10_000 ether, sqrtPrice);
+
+        vm.expectRevert(StructuredYieldHook.PositionAlreadyActive.selector);
+        hook.beforeAddLiquidity(poolId, lp, 20_000 ether, sqrtPrice);
+    }
+
     function testBeforeRemoveLiquidityCoversILFromVault() public {
         uint256 maturity = block.timestamp + 90 days;
         hook.initializePool(poolId, maturity);

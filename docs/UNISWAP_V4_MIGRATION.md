@@ -21,12 +21,12 @@ Expected remappings:
 forge-std/=lib/forge-std/src/
 ```
 
-## Contract Conversion Checklist
+## Contract Conversion Status
 
-1. Keep `StructuredYieldHook` as the independently testable accounting core.
-2. Use `StructuredYieldV4Hook` for the current `IHooks` callback surface.
-3. Replace `bytes32 poolId` with `PoolKey calldata key` + `key.toId()` where callback entrypoints are used.
-4. `getHookPermissions()` currently enables:
+1. `StructuredYieldHook` remains the independently testable accounting core.
+2. `StructuredYieldV4Hook` is the current `IHooks` callback adapter.
+3. Callback entrypoints use `PoolKey calldata key` + `key.toId()` for pool identity.
+4. `getHookPermissions()` enables:
    - `afterInitialize`
    - `beforeAddLiquidity`
    - `beforeRemoveLiquidity`
@@ -35,9 +35,9 @@ forge-std/=lib/forge-std/src/
 5. `afterInitialize` initializes PT/YT lifecycle state for the V4 pool id.
 6. `beforeAddLiquidity` accepts explicit LP accounting data through `hookData`.
 7. `afterSwap` routes deterministic delta-derived fee input into the accounting path.
-8. Validate deployed hook address has the correct permission bits.
-9. Replace demo `depositValue` accounting with real liquidity/value computation before mainnet use.
-10. Update `SYRouter` to call PoolManager modify-liquidity flows rather than direct hook methods.
+8. The deployed hook address has the required permission bits on Unichain Sepolia.
+9. `SYRouter` calls `PoolManager.unlock`, `modifyLiquidity`, and `swap` for the real V4 path.
+10. Remaining mainnet work: replace demo `depositValue`/liquidity sizing with exact V4 token-delta math and slippage-controlled quotes.
 
 ## Target Callback Mapping
 

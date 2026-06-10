@@ -51,8 +51,16 @@ contract YieldAccounting {
         emit FeesClaimed(poolId, lp, owed);
     }
 
+    function quoteClaimableFees(bytes32 poolId, address lp, uint256 ytBalance) external view returns (uint256 owed) {
+        uint256 currentIndex = feeIndex[poolId];
+        uint256 snapshot = feeIndexSnapshot[poolId][lp];
+
+        if (currentIndex <= snapshot || ytBalance == 0) return 0;
+
+        owed = ((currentIndex - snapshot) * ytBalance) / Q128;
+    }
+
     function checkpoint(bytes32 poolId, address lp) external onlyHook {
         feeIndexSnapshot[poolId][lp] = feeIndex[poolId];
     }
 }
-

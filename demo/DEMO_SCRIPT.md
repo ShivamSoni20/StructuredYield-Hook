@@ -2,58 +2,67 @@
 
 ## 0:00-0:15 — Problem
 
-"Uniswap LPs earn fees, but returns are unpredictable because impermanent loss can overwhelm those fees. That makes LP positions hard to use as fixed-income collateral."
+"Uniswap LPs earn fees, but returns are unpredictable because impermanent loss can overwhelm them. StructuredYield solves this by splitting LP exposure into PT-LP for principal and YT-LP for the fee stream."
 
-## 0:15-0:35 — Solution
+## 0:15-0:45 — Live Proof
 
-"StructuredYield turns one LP position into two instruments: PT-LP for principal and YT-LP for fee yield. PT holders get a fixed-return style asset. YT holders get amplified exposure to trading fees."
+Open:
 
-## 0:35-1:05 — Landing Page
+```text
+https://unichain-sepolia.blockscout.com/tx/0xda4cd759a5f9d75287e193d965600eef6f3f873ca0b16cf2069cb888f58d09fb
+```
 
-Open `http://localhost:3000`.
+Point out:
+
+- V4 `Swap` event in the logs.
+- `StructuredYieldV4Hook.afterSwap` was called.
+- Fee routing sent `24` units to YT holders and `6` units to the insurance reserve.
+- This is a real Unichain Sepolia transaction, not a simulation.
+
+"A real USDC swap went through Uniswap V4 PoolManager, our hook intercepted the `afterSwap` callback, and fees were routed to YT holders automatically."
+
+## 0:45-1:15 — Landing Page
+
+Open:
+
+```text
+http://localhost:3000
+```
 
 Show:
 
-- PT/YT split card
-- Fixed APY and variable yield rows
-- Insurance reserve status
-- Hook mechanism flow
+- PT/YT split card.
+- Mechanism flow.
+- Insurance reserve status.
+- Hook lifecycle explanation.
 
-Narration:
+"Connect wallet on Unichain Sepolia to see real positions and live pool state."
 
-"The user deposits liquidity once. The hook records a reference price, mints PT-LP and YT-LP, routes fees to YT holders, and uses a reserve to cover IL at maturity."
+## 1:15-1:45 — Dashboard
 
-## 1:05-1:35 — Dashboard
-
-Click "Open App".
+Connect MetaMask on Unichain Sepolia. The app auto-redirects to `/dashboard`.
 
 Show:
 
-- TVL
-- Average fixed APY
-- YT fees earned
-- IL protected
-- Maturity timeline
-- Active positions table
+- Live/demo badge in the metrics grid.
+- Live V4 pool ID, liquidity, tick, and fee.
+- Wallet USDC/WETH balances.
+- Real V4 swap panel.
+- Real position data from `SYLens` when the connected wallet has an active position.
 
-Narration:
+## 1:45-2:00 — Close
 
-"The dashboard tracks principal, fee yield, IL coverage, and upcoming maturity. This is currently connected to the frontend shell and contract ABI config, with demo data until deployed addresses are supplied."
+"StructuredYield implements the complete UHI9 fixed-income lifecycle on Uniswap V4: deposit, PT/YT split, fee routing, IL coverage, and maturity redemption. The live Unichain Sepolia swap proves the hook is running through real V4 callbacks."
 
-## 1:35-1:55 — Contract Walkthrough
+## Demo-Day Checklist
 
-Show these files:
-
-- `contracts/src/StructuredYieldHook.sol`
-- `contracts/src/math/ILMath.sol`
-- `contracts/src/vault/InsuranceVault.sol`
-- `contracts/src/accounting/YieldAccounting.sol`
-
-Narration:
-
-"The contract scaffold implements the lifecycle: mint PT/YT on deposit, route fees, compute IL from sqrt price, cap payouts by vault reserve, and settle positions at maturity."
-
-## 1:55-2:00 — Close
-
-"StructuredYield brings Pendle-style fixed income directly into Uniswap V4 LP positions: composable, oracle-light, and designed around native hook callbacks."
-
+1. MetaMask configured for Unichain Sepolia: chain `1301`, RPC `https://sepolia.unichain.org`.
+2. `frontend/.env.local` includes the live hook, router, lens, pool ID, and chain ID.
+3. `npm run build` passes.
+4. Open `http://localhost:3000` and connect wallet.
+5. Confirm landing page scroll and wallet redirect flow.
+6. Show `/dashboard` live V4 panel.
+7. Open `DepositModal` and show "Real V4 mode · Unichain Sepolia" plus approval buttons.
+8. Open the live position detail route for pool `0x92b0899e642ee283b7673bfb931c1e44bb7c2a00c18cc1862d11d743dd8849e4`.
+9. Show the live Blockscout swap transaction.
+10. State accepted limitations clearly: approximate liquidity math, no real vault custody, and subgraph not yet deployed to Graph Studio.

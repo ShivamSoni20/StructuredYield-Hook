@@ -2,12 +2,11 @@
 
 import { ArrowDown, ArrowLeft, Circle, Diamond, Plus, Settings, Shield, Shuffle } from "lucide-react";
 
-type Tab = "portfolio" | "positions" | "markets" | "trade" | "redeem" | "settings";
+type Tab = "portfolio" | "positions" | "markets" | "liquidity" | "trade" | "redeem" | "settings";
 
 type Props = {
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
-  onNewPosition: () => void;
   onBackHome: () => void;
 };
 
@@ -23,7 +22,7 @@ const groups = [
   {
     label: "Actions",
     items: [
-      { tab: "portfolio" as const, label: "Add Liquidity", icon: Plus, action: "deposit" },
+      { tab: "liquidity" as const, label: "Add Liquidity", icon: Plus },
       { tab: "trade" as const, label: "Trade YT-LP", icon: Shuffle },
       { tab: "redeem" as const, label: "Redeem PT-LP", icon: ArrowDown }
     ]
@@ -37,7 +36,7 @@ const groups = [
   }
 ];
 
-export function DashboardSidebar({ activeTab, onTabChange, onNewPosition, onBackHome }: Props) {
+export function DashboardSidebar({ activeTab, onTabChange, onBackHome }: Props) {
   return (
     <aside className="dashboard-sidebar border-white/10 bg-[#111318]">
       {groups.map((group) => (
@@ -46,14 +45,13 @@ export function DashboardSidebar({ activeTab, onTabChange, onNewPosition, onBack
           {group.items.map((item) => {
             const Icon = item.icon;
             const action = "action" in item ? item.action : undefined;
-            const active = activeTab === item.tab && action !== "deposit" && action !== "home";
+            const active = activeTab === item.tab && action !== "home";
             return (
               <button
                 key={`${group.label}-${item.label}`}
                 type="button"
                 onClick={() => {
-                  if (action === "deposit") onNewPosition();
-                  else if (action === "home") onBackHome();
+                  if (action === "home") onBackHome();
                   else onTabChange(item.tab);
                 }}
                 className={`sidebar-link ${active ? "sidebar-link-active" : ""}`}

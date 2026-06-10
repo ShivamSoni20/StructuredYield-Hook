@@ -119,6 +119,14 @@ Rolling 50-observation volatility estimator used to update premium inputs from s
 
 The `frontend/` app is a Next.js 14 App Router project wired for Wagmi and Viem.
 
+Live demo controls included:
+
+- RainbowKit wallet connection with protected dashboard routing.
+- Real V4 pool state from Unichain Sepolia `StateView`: pool ID, liquidity, tick, and LP fee.
+- WETH/USDC balance and approval UX before live deposits/swaps.
+- Real `SYRouter.addLiquidityToPool`, `SYRouter.swapExactInputSingle`, `SYRouter.claimFees`, and maturity-gated redeem flows.
+- Live/demo badge so judges can distinguish real SYLens data from fallback demo rows.
+
 Run locally after installing dependencies:
 
 ```bash
@@ -175,7 +183,7 @@ Network details:
 
 - Network: Unichain Sepolia
 - Chain ID: `1301`
-- RPC: `https://sepolia.unichain.org`
+- RPC: `https://sepolia.unichain.org` or an Alchemy/QuickNode endpoint via `NEXT_PUBLIC_UNICHAIN_RPC_URL`
 - Explorer: `https://unichain-sepolia.blockscout.com`
 - V4 `PoolManager`: `0x00B036B58a818B1BC34d502D3fE730Db729e62AC`
 - V4 `UniversalRouter`: `0xf70536B3bcC1bD1a972dc186A2cf84cC6da6Be5D`
@@ -184,9 +192,11 @@ Network details:
 
 Current verified deployment:
 
+> Note: these addresses are the live Unichain Sepolia demo deployment. The latest local contract changes, including pending-fee lens reads and active-position overwrite protection, require a redeploy before they are reflected on-chain.
+
 | Contract | Address |
 |---|---|
-| `StructuredYieldHook` | `0x7d68F662E056706476A04AD9CFca3740CaaeDb40` |
+| `StructuredYieldV4Hook` | `0x7d68F662E056706476A04AD9CFca3740CaaeDb40` |
 | `SYRouter` | `0x6bd6903B652a2E37Fc189e7b3a1DEa2d6Bb77D63` |
 | `SYLens` | `0x6866ba266A127c13a2A6DD5877f7F229a75886c9` |
 | `InsuranceVault` | `0xe948E1EbEa6bff1cA9ED2b4552D2AA3463bc1f5D` |
@@ -325,6 +335,22 @@ Live integration proof:
 
 The live swap emitted the V4 `Swap` event, called `StructuredYieldV4Hook.afterSwap`, accrued `24` fee units to YT holders, and routed `6` fee units to the insurance reserve.
 
+RfH alignment for UHI9 — Impermanent Loss & Yield Systems:
+
+| RfH Category | StructuredYield Implementation | Status |
+|---|---|---|
+| IL Insurance Hooks | `InsuranceVault` reserve accounting plus maturity-time `beforeRemoveLiquidity` IL coverage | Live on Unichain Sepolia |
+| YieldBasis-Style Fixed Income | PT-LP principal token and YT-LP fee-stream token around a V4 LP position | Live on Unichain Sepolia |
+| Fee-Smoothing Hooks | `afterSwap` routes fees through a Q128 fee index without per-holder loops | Verified in live swap tx |
+| Delta-Neutral Hooks | Not implemented | Out of scope |
+| Cross-Pool Hedging | Not implemented | Out of scope |
+
+Unichain prize track alignment:
+
+- Tokenized strategies / yield-bearing tokens: PT-LP and YT-LP are ERC-20 tokens backed by the LP lifecycle.
+- Real V4 PoolManager integration: liquidity and swaps route through Unichain Sepolia V4 `PoolManager`.
+- Live transaction proof: the real swap transaction above proves `afterSwap` fee routing.
+
 ## Demo
 
 Run the UI:
@@ -385,10 +411,10 @@ Current local scan completed with no Critical/High-labeled findings in the outpu
 
 ## Roadmap
 
-- Install Foundry and Slither locally.
-- Run the new Unichain Sepolia V4 fork tests with `UNICHAIN_SEPOLIA_RPC_URL=https://sepolia.unichain.org forge test --match-contract V4IntegrationTest -vvvv`.
-- Run Slither and gas snapshots.
-- Deploy to Base Sepolia or Unichain testnet.
+- Deploy the subgraph and set `NEXT_PUBLIC_SUBGRAPH_URL` so fee charts use indexed live events instead of demo fallback data.
+- Replace demo liquidity sizing with exact V4 token-delta math and slippage controls before production use.
+- Add real token custody and guarded transfers to `InsuranceVault.fund()` and `InsuranceVault.payout()`.
+- Re-run Slither, gas snapshots, and fork tests before any new deployed build is submitted.
 
 ## Notes
 

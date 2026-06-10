@@ -1,12 +1,17 @@
 import { YieldMeter } from "@/components/YieldMeter";
-import { DEMO_POSITIONS } from "@/lib/demo";
+import { usePositions } from "@/hooks/usePositions";
 
 export function YieldMeters() {
+  const { data: positions, isMocked } = usePositions();
+
   return (
     <section className="rounded-2xl border border-white/10 bg-[#111318] p-6">
-      <h2 className="font-semibold text-white">Yield Distribution by Pool</h2>
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+        <h2 className="font-semibold text-white">Yield Distribution by Pool</h2>
+        <p className="text-xs text-zinc-500">{isMocked ? "Demo yields" : "Live wallet position"}</p>
+      </div>
       <div className="mt-6 grid gap-8 lg:grid-cols-3">
-        {DEMO_POSITIONS.map((position) => (
+        {positions.map((position) => (
           <div key={position.poolId} className="space-y-4">
             <p className="text-sm font-semibold text-zinc-300">{position.poolName}</p>
             <YieldMeter label="Fee APY" value={position.feeApy} max={30} />

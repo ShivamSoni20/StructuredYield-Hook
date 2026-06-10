@@ -53,17 +53,20 @@ contract SYLens {
 
         if (!initialized || !active) return view_;
 
+        uint256 ptBalance = PTToken(ptToken).balanceOf(lp);
+        uint256 ytBalance = YTToken(ytToken).balanceOf(lp);
         (uint256 currentILAmount, uint256 currentILBps) = hook.quoteIL(poolId, lp, currentSqrtPrice);
         uint256 elapsed = block.timestamp > depositTimestamp ? block.timestamp - depositTimestamp : 1;
         uint256 claimedAndCovered = feesClaimed + ilCovered;
+        uint256 pendingFees = hook.yieldAccounting().quoteClaimableFees(poolId, lp, ytBalance);
 
         view_ = PositionView({
-            ptBalance: PTToken(ptToken).balanceOf(lp),
-            ytBalance: YTToken(ytToken).balanceOf(lp),
+            ptBalance: ptBalance,
+            ytBalance: ytBalance,
             depositedValue: depositedValue,
             currentILBps: currentILBps,
             currentILAmount: currentILAmount,
-            accruedFees: claimedAndCovered,
+            accruedFees: pendingFees,
             secondsToMaturity: block.timestamp >= maturityTimestamp ? 0 : maturityTimestamp - block.timestamp,
             isVaultSolvent: insuranceReserve >= currentILAmount,
             estimatedFixedAPY: ptMinted == 0 ? 0 : (claimedAndCovered * 365 days * 10_000) / (ptMinted * elapsed),

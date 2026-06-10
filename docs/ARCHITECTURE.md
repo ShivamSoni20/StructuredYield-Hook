@@ -1,6 +1,6 @@
 # StructuredYield Architecture
 
-StructuredYield splits Uniswap V4 LP exposure into principal and yield claims. The current repository uses a dependency-light contract model so product mechanics can be tested before final `BaseHook` integration.
+StructuredYield splits Uniswap V4 LP exposure into principal and yield claims. The repository keeps a dependency-light accounting core and now includes a real Uniswap V4 `IHooks` adapter for deployed PoolManager flows.
 
 ## Core Components
 
@@ -45,5 +45,6 @@ ILMath / PremiumMath -> pure pricing helpers
 
 ## Current Integration Boundary
 
-The hook contract currently exposes mockable callback-like functions instead of importing Uniswap V4 packages. Final production work is to adapt these entrypoints to `BaseHook` signatures and `PoolKey`/`PoolId` types.
+`StructuredYieldHook` remains the independently testable accounting core. `StructuredYieldV4Hook` implements the Uniswap V4 `IHooks` callback surface, maps `PoolKey` to `PoolId`, and dispatches accounting through inherited core methods. `SYRouter` supports both the scaffold direct-call mode and the real V4 `PoolManager.unlock` paths for modify-liquidity and swap settlement.
 
+Production hardening still required before mainnet includes exact V4 token-delta liquidity math, real token custody in `InsuranceVault`, deployed subgraph indexing, slippage bounds, and fee-ownership handling for transferable YT-LP tokens.

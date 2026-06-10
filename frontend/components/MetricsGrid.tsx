@@ -6,7 +6,7 @@ import { usePositions } from "@/hooks/usePositions";
 import { formatBps, formatCurrency } from "@/lib/math";
 
 export function MetricsGrid() {
-  const { data: positions } = usePositions();
+  const { data: positions, isMocked } = usePositions();
   const totalValue = positions.reduce((sum, position) => sum + position.depositedValue, 0n);
   const feesEarned = positions.reduce((sum, position) => sum + position.accruedFees, 0n);
   const ilProtected = positions.reduce((sum, position) => sum + (position.isVaultSolvent ? position.currentILAmount : 0n), 0n);
@@ -15,12 +15,22 @@ export function MetricsGrid() {
     : 0;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <Metric icon={<Wallet />} label="Total Value Locked" value={formatCurrency(totalValue)} delta="+2.3% this week" />
-      <Metric icon={<TrendingUp />} label="Avg Fixed APY" value={formatBps(avgApy)} delta="+0.4% vs last epoch" accent="gold" />
-      <Metric icon={<Waves />} label="YT-LP Fees Earned" value={formatCurrency(feesEarned)} delta="+12% this month" accent="teal" />
-      <Metric icon={<ShieldCheck />} label="IL Protected" value={formatCurrency(ilProtected)} delta="Insurance Active" accent="green" />
-    </div>
+    <section>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Metric icon={<Wallet />} label="Total Value Locked" value={formatCurrency(totalValue)} delta="+2.3% this week" />
+        <Metric icon={<TrendingUp />} label="Avg Fixed APY" value={formatBps(avgApy)} delta="+0.4% vs last epoch" accent="gold" />
+        <Metric icon={<Waves />} label="YT-LP Fees Earned" value={formatCurrency(feesEarned)} delta="+12% this month" accent="teal" />
+        <Metric icon={<ShieldCheck />} label="IL Protected" value={formatCurrency(ilProtected)} delta="Insurance Active" accent="green" />
+      </div>
+      {isMocked ? (
+        <p className="mt-2 text-xs text-zinc-600">Showing demo data. Connect wallet on Unichain Sepolia and deposit to see live metrics.</p>
+      ) : (
+        <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-[#4ade80]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#4ade80]" />
+          Live data from Unichain Sepolia
+        </p>
+      )}
+    </section>
   );
 }
 

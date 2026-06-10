@@ -107,7 +107,7 @@ export default function PositionDetailPage() {
           </section>
         </div>
 
-        <DepositModal open={depositOpen} onClose={() => setDepositOpen(false)} poolId={poolId} />
+        <DepositModal open={depositOpen} onClose={() => setDepositOpen(false)} mode="add-liquidity" poolId={poolId} />
         <RedeemModal open={redeemOpen} onClose={() => setRedeemOpen(false)} poolId={poolId} />
       </main>
     </WalletRouteGuard>

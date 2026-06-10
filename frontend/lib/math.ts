@@ -22,8 +22,7 @@ export function formatDuration(seconds?: bigint | number) {
   return `${days} days`;
 }
 
-export function parseDepositAmount(amount: string) {
+export function parseDepositAmount(amount: string, decimals = 18) {
   if (!amount || Number.isNaN(Number(amount))) return 0n;
-  return parseUnits(amount, 18);
+  return parseUnits(amount, decimals);
 }
-

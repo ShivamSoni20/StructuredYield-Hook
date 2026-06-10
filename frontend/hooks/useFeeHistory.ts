@@ -5,7 +5,7 @@ import { useAccount } from "wagmi";
 
 const SUBGRAPH_URL = process.env.NEXT_PUBLIC_SUBGRAPH_URL;
 
-type FeeEvent = {
+export type FeeEvent = {
   timestamp: string;
   feeAmount: string;
   poolId: string;

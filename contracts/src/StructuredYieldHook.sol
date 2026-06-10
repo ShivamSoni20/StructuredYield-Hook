@@ -55,6 +55,7 @@ contract StructuredYieldHook {
     error InvalidMaturity();
     error InvalidDepositValue();
     error PositionNotActive();
+    error PositionAlreadyActive();
     error PositionMatured();
     error PositionNotMatured();
     error NotOwner();
@@ -104,6 +105,7 @@ contract StructuredYieldHook {
         if (!pool.initialized) revert PoolNotInitialized();
         if (depositValue == 0) revert InvalidDepositValue();
         if (block.timestamp >= pool.maturityTimestamp) revert PositionMatured();
+        if (positions[poolId][lp].active) revert PositionAlreadyActive();
 
         uint256 ytAmount = _computeYTAmount(depositValue, pool.maturityTimestamp);
 

@@ -21,7 +21,7 @@ Reviewed source areas:
 | Oracle assumptions | Good | IL math uses reference/current sqrt price inputs; no external oracle dependency in current model. |
 | Solvency | Partial | Vault caps payout by reserve; no reserve target enforcement yet. |
 | Token custody | Not in scope | Current scaffold accounts value but does not custody underlying LP tokens or real vault assets. |
-| Uniswap V4 integration | Partial | `StructuredYieldV4Hook` implements the installed `IHooks` callback surface directly; final PoolManager settlement tests remain. |
+| Uniswap V4 integration | Testnet live | `StructuredYieldV4Hook` is deployed on Unichain Sepolia; real PoolManager liquidity and swap settlement have been tested. |
 
 ## Known Risks
 
@@ -31,11 +31,12 @@ Reviewed source areas:
 4. `ILMath` should be fuzzed for extreme sqrt price ratios and overflow boundaries.
 5. `SYLens` is for frontend convenience and should not be used as a source of truth for settlement.
 6. `InsuranceVault.reserves(poolId)` is an accounting ledger for the scaffold. It does not transfer or custody USDC/WETH/ETH yet; production `fund()` and `payout()` must move real assets and add reentrancy protection.
+7. `SYLens.getPosition()` now reports pending claimable YT fees from the fee index. Historical claimed fees remain available from the core position state/events rather than that lens field.
 
 ## Tooling Status
 
 - Slither: ran locally with `slither . --exclude-dependencies`; no Critical/High findings, but medium/info findings remain for reentrancy review, timestamp usage, divide-before-multiply, unused returns, and zero-address validation.
-- Foundry tests: `forge test -vvv` passes with 30 tests.
+- Foundry tests: `forge test` passes with 35 tests.
 - Gas snapshot: `forge snapshot` passes and writes `contracts/.gas-snapshot`.
 - Frontend build: runs with `npm.cmd run build`.
 
@@ -43,9 +44,9 @@ Reviewed source areas:
 
 - Add explicit deployer/admin controls for remaining scaffold setup functions.
 - Add real token custody to `InsuranceVault.fund()` and `InsuranceVault.payout()` before production deployment.
-- Mine/deploy `StructuredYieldV4Hook` with CREATE2 so the address permission bits match `getHookPermissions()`.
+- Keep the CREATE2-mined `StructuredYieldV4Hook` deployment address permission bits aligned with `getHookPermissions()`.
 - Keep the direct `IHooks` adapter or switch to `BaseHook` if a future `v4-periphery` release exposes it.
-- Add fork tests against the target V4 deployment.
+- Keep fork tests against the target V4 deployment in CI before production releases.
 - Add fuzz tests for IL math and accounting.
 - Resolve remaining Slither medium/info findings before real testnet custody.
 - Compare `forge snapshot` values against final production gas targets.

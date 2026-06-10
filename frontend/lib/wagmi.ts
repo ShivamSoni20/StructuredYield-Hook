@@ -15,10 +15,11 @@ export const queryClient = new QueryClient({
 });
 
 const chains = [unichainSepolia, foundry, baseSepolia] as const;
+const unichainRpcUrl = process.env.NEXT_PUBLIC_UNICHAIN_RPC_URL || "https://sepolia.unichain.org";
 const transports = {
   [foundry.id]: http(),
   [baseSepolia.id]: http(),
-  [unichainSepolia.id]: http("https://sepolia.unichain.org")
+  [unichainSepolia.id]: http(unichainRpcUrl)
 };
 
 export const wagmiConfig = createConfig({

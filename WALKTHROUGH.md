@@ -60,7 +60,7 @@ Implemented:
   - mechanism
   - hook-points
   - CTA
-- Landing nav shows **Connect Wallet** when disconnected and **Open App** only after a wallet is connected.
+- Landing nav shows **Connect Wallet** when disconnected and redirects connected wallets into the dashboard.
 - Wallet connection uses RainbowKit + Wagmi.
 - Connect flow redirects connected users to `/dashboard`.
 - Dashboard is wallet-protected.
@@ -93,7 +93,7 @@ Implemented:
 
 - `schema.graphql` entities for positions, fee routes, IL coverage, and position closures.
 - `mappings.ts` handlers for major hook events.
-- `subgraph.yaml` configured for Unichain Sepolia with the deployed hook address and approximate deployment `startBlock: 5000000`.
+- `subgraph.yaml` configured for Unichain Sepolia with the live hook address and approximate deployment `startBlock: 54013140`.
 
 ### Docs
 
@@ -218,6 +218,8 @@ The V4 adapter and production router path are implemented:
 
 The real V4 hook, production router, lens, and WETH/USDC hook pool are deployed on Unichain Sepolia. The pool is initialized through Uniswap V4 `PoolManager` and has `1,000,000` test liquidity units. A live `0.01 USDC` swap through `SYRouter.swapExactInputSingle` succeeded, emitted the V4 `Swap` event, called `StructuredYieldV4Hook.afterSwap`, accrued `24` fee units to YT holders, and routed `6` fee units to the insurance reserve.
 
+The latest local source now adds pending-fee lens reads and an active-position overwrite guard. Those changes are not part of the already-deployed demo addresses until a fresh deployment is run.
+
 Live integration proof:
 
 | Action | Transaction |
@@ -322,9 +324,8 @@ forge script script/CreatePool.s.sol \
 
 ## Next Steps
 
-1. Run Foundry tests in an environment where `forge` is installed.
-2. Mine and deploy `StructuredYieldV4Hook` with correct permission bits.
-3. Run Unichain Sepolia V4 fork tests for add liquidity, swap, fee routing, and remove liquidity.
-4. Add actual token custody to `InsuranceVault`.
-5. Deploy and wire the subgraph with the real contract address and start block.
-6. Replace demo fallback values with production reads once the full live integration is verified.
+1. Deploy the Unichain Sepolia subgraph and set `NEXT_PUBLIC_SUBGRAPH_URL` for live fee-history charts.
+2. Replace demo liquidity sizing with exact V4 token-delta math, quotes, and slippage bounds.
+3. Add actual token custody to `InsuranceVault.fund()` and `InsuranceVault.payout()`.
+4. Add production-grade YT transfer fee ownership handling before treating YT-LP as freely tradable.
+5. Re-run Slither, gas snapshots, and Unichain Sepolia fork tests before any new deployed build is submitted.

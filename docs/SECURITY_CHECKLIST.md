@@ -1,17 +1,23 @@
 # Security Checklist
 
-## Before Testnet
+## Completed For Current Testnet Demo
 
-- [ ] Install Foundry.
+- [x] Install Foundry.
+- [x] Pull Uniswap V4 core/periphery dependencies.
+- [x] Convert callback-like functions to real `IHooks` adapter entrypoints.
+- [x] Add deployment scripts and deterministic hook address validation.
+- [x] Run unit tests.
+- [x] Run integration tests.
+- [x] Run fork tests.
+
+## Remaining Before Production/Mainnet
+
 - [ ] Install Slither.
-- [ ] Pull Uniswap V4 core/periphery dependencies.
-- [ ] Convert callback-like functions to real `BaseHook` overrides.
 - [ ] Add access control for pool initialization, volatility updates, and reserve funding.
-- [ ] Add maturity and withdrawal policy checks around IL coverage.
-- [ ] Add deployment scripts and deterministic hook address validation.
-- [ ] Run unit tests.
-- [ ] Run integration tests.
-- [ ] Run fork tests.
+- [x] Add maturity and withdrawal policy checks around IL coverage.
+- [ ] Add real token custody and reentrancy protection for `InsuranceVault`.
+- [ ] Add exact V4 liquidity/value quoting and slippage checks.
+- [ ] Add YT transfer fee-ownership handling or explicitly constrain YT transferability.
 - [ ] Run Slither and resolve High/Critical findings.
 - [ ] Run gas snapshots and compare against targets.
 
@@ -38,4 +44,3 @@ forge snapshot
 - Fee index precision and rounding behavior.
 - Reentrancy once underlying asset transfers are added.
 - Correct Uniswap V4 hook permissions and callback selectors.
-

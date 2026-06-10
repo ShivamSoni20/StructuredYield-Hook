@@ -9,13 +9,47 @@ export const DEFAULT_TICK_UPPER = 887220;
 export const SUBGRAPH_URL = process.env.NEXT_PUBLIC_SUBGRAPH_URL;
 export const V4_HOOK_ADDRESS = (process.env.NEXT_PUBLIC_V4_HOOK_ADDRESS || ZERO_ADDRESS) as `0x${string}`;
 export const USE_REAL_V4 = V4_HOOK_ADDRESS !== ZERO_ADDRESS;
+export const USDC_ADDRESS = "0x31d0220469e10c4E71834a79b1f276d740d3768F" as `0x${string}`;
+export const WETH_ADDRESS = "0x4200000000000000000000000000000000000006" as `0x${string}`;
 
 export const REAL_POOL_KEY = {
-  currency0: "0x31d0220469e10c4E71834a79b1f276d740d3768F" as `0x${string}`,
-  currency1: "0x4200000000000000000000000000000000000006" as `0x${string}`,
+  currency0: USDC_ADDRESS,
+  currency1: WETH_ADDRESS,
   fee: 3000,
   tickSpacing: 60,
   hooks: V4_HOOK_ADDRESS
+} as const;
+
+export const ERC20 = {
+  abi: [
+    {
+      type: "function",
+      name: "approve",
+      stateMutability: "nonpayable",
+      inputs: [
+        { name: "spender", type: "address" },
+        { name: "amount", type: "uint256" }
+      ],
+      outputs: [{ name: "", type: "bool" }]
+    },
+    {
+      type: "function",
+      name: "allowance",
+      stateMutability: "view",
+      inputs: [
+        { name: "owner", type: "address" },
+        { name: "spender", type: "address" }
+      ],
+      outputs: [{ name: "", type: "uint256" }]
+    },
+    {
+      type: "function",
+      name: "balanceOf",
+      stateMutability: "view",
+      inputs: [{ name: "account", type: "address" }],
+      outputs: [{ name: "", type: "uint256" }]
+    }
+  ]
 } as const;
 
 const poolKeyComponents = [

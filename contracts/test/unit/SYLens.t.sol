@@ -30,5 +30,15 @@ contract SYLensTest is Test {
         assertEq(view_.currentILAmount, 2_000 ether);
         assertTrue(view_.isVaultSolvent);
     }
-}
 
+    function testGetPositionReportsPendingClaimableFees() public {
+        hook.initializePool(poolId, block.timestamp + 90 days);
+        hook.beforeAddLiquidity(poolId, lp, 10_000 ether, sqrtPrice);
+
+        hook.afterSwap(poolId, 1_000 ether, sqrtPrice);
+
+        SYLens.PositionView memory view_ = lens.getPosition(poolId, lp, sqrtPrice);
+
+        assertApproxEqAbs(view_.accruedFees, 800 ether, 1);
+    }
+}
