@@ -28,7 +28,7 @@ export function DepositModal({ open, onClose, mode = "new-position", poolId, onS
   const requiredWeth = parsedAmount > 0n ? parsedAmount : 0n;
   const usdcApproval = useTokenApproval(USDC_ADDRESS, parsedAmount);
   const wethApproval = useTokenApproval(WETH_ADDRESS, requiredWeth);
-  const maturityNumber = USE_REAL_V4 ? 90 : Number(maturityDays);
+  const maturityNumber = Number(maturityDays);
   const estimatedYT = parsedAmount > 0n ? (parsedAmount * BigInt(maturityNumber)) / 365n : 0n;
   const selectedMarket = DEMO_MARKETS.find((market) => market.poolId === selectedPool) ?? DEMO_MARKETS[0];
   const premiumBps = BigInt(selectedMarket.premiumBps);
@@ -172,16 +172,12 @@ export function DepositModal({ open, onClose, mode = "new-position", poolId, onS
               id="maturity"
               value={maturityDays}
               onChange={(event) => setMaturityDays(event.target.value)}
-              disabled={USE_REAL_V4}
               className="min-h-10 w-full rounded-md border bg-background px-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="30">30 days</option>
               <option value="90">90 days</option>
               <option value="180">180 days</option>
             </select>
-            {USE_REAL_V4 ? (
-              <p className="text-xs text-muted-foreground">Live V4 pool maturity is fixed at 90 days by `afterInitialize`.</p>
-            ) : null}
           </div>
 
           <div className="rounded-lg border bg-secondary/40 p-4 text-sm">
@@ -205,7 +201,7 @@ export function DepositModal({ open, onClose, mode = "new-position", poolId, onS
                 <ApprovalButton
                   label={`Approve ${formatCurrency(parsedAmount, 6)} USDC`}
                   approvedLabel="USDC Approved"
-                  approved={usdcApproval.approved}
+                  approved={parsedAmount > 0n && usdcApproval.approved}
                   disabled={parsedAmount === 0n || usdcApproval.isLoading}
                   loading={usdcApproval.isLoading}
                   onClick={usdcApproval.approve}
@@ -213,7 +209,7 @@ export function DepositModal({ open, onClose, mode = "new-position", poolId, onS
                 <ApprovalButton
                   label={`Approve ${formatUnits(requiredWeth, 18)} WETH`}
                   approvedLabel="WETH Approved"
-                  approved={wethApproval.approved}
+                  approved={requiredWeth > 0n && wethApproval.approved}
                   disabled={requiredWeth === 0n || wethApproval.isLoading}
                   loading={wethApproval.isLoading}
                   onClick={wethApproval.approve}
