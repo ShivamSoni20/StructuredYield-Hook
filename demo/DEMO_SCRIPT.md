@@ -65,4 +65,6 @@ Show:
 7. Open `DepositModal` and show "Real V4 mode · Unichain Sepolia" plus approval buttons.
 8. Open the live position detail route for pool `0x92b0899e642ee283b7673bfb931c1e44bb7c2a00c18cc1862d11d743dd8849e4`.
 9. Show the live Blockscout swap transaction.
-10. State accepted limitations clearly: approximate liquidity math, no real vault custody, and subgraph not yet deployed to Graph Studio.
+10. State accepted limitations clearly: approximate liquidity math,
+    vault funding is manual (owner calls fundWithTokens), and subgraph
+    not yet deployed to Graph Studio.
