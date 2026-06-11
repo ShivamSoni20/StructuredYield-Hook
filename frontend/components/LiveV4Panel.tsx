@@ -89,7 +89,19 @@ export function LiveV4Panel() {
               </button>
             )}
           </div>
-          {swap.hash ? <p className="mt-3 break-all font-mono text-xs text-zinc-500">Tx: {swap.hash}</p> : null}
+          {swap.hash ? (
+            <p className="mt-3 break-all font-mono text-xs text-zinc-500">
+              Tx:{" "}
+              <a
+                href={`https://unichain-sepolia.blockscout.com/tx/${swap.hash}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[#d4a853] underline decoration-[#d4a853]/40 underline-offset-4 hover:text-[#f0c878]"
+              >
+                {swap.hash}
+              </a>
+            </p>
+          ) : null}
           {swap.isSuccess ? <p className="mt-2 text-xs font-semibold text-[#4ade80]">Swap confirmed. Fee routing updated on-chain.</p> : null}
           {swap.error || usdcApproval.error ? <p className="mt-2 text-xs text-[#f87171]">Wallet transaction failed or was rejected.</p> : null}
         </div>

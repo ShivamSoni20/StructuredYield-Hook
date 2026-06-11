@@ -25,7 +25,7 @@ export function DepositModal({ open, onClose, mode = "new-position", poolId, onS
   const { deposit, isLoading, isSuccess, hash, lastMaturityDays } = useMintPTYT();
 
   const parsedAmount = parseDepositAmount(amount, USE_REAL_V4 ? 6 : 18);
-  const requiredWeth = parsedAmount > 0n ? parsedAmount : 0n;
+  const requiredWeth = parseDepositAmount(amount, 18);
   const usdcApproval = useTokenApproval(USDC_ADDRESS, parsedAmount);
   const wethApproval = useTokenApproval(WETH_ADDRESS, requiredWeth);
   const maturityNumber = Number(maturityDays);

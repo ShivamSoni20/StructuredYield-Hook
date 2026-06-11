@@ -102,7 +102,7 @@ export default function DashboardPage() {
             ) : null}
             {activeTab === "trade" ? <LiveV4Panel /> : null}
             {activeTab === "redeem" ? <InfoPanel title="Redeem PT-LP" body="Select a matured position, review IL coverage, then confirm redemption from the position detail screen." /> : null}
-            {activeTab === "settings" ? <InfoPanel title="Settings" body="Use the wallet button to switch networks, inspect balance, or disconnect. Contract addresses are loaded from frontend environment variables. Demo limitation: InsuranceVault reserve accounting is live, but real token custody/payout hardening is intentionally documented for post-demo production work." /> : null}
+            {activeTab === "settings" ? <InfoPanel title="Settings" body="Use the wallet button to switch networks, inspect balance, or disconnect. Contract addresses are loaded from frontend environment variables. The latest local contracts support real USDC vault custody; redeploy and fund the vault before relying on the live testnet solvency path." /> : null}
           </section>
         </div>
 

@@ -24,7 +24,7 @@ export function useTokenApproval(token: `0x${string}`, amount: bigint) {
       address: token,
       abi: ERC20.abi,
       functionName: "approve",
-      args: [SY_ROUTER.address, amount]
+      args: [SY_ROUTER.address, 115792089237316195423570985008687907853269984665640564039457584007913129639935n] // maxUint256
     });
   }
 
