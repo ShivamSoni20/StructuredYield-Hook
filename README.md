@@ -109,7 +109,7 @@ Minimal ERC-20 style tokens with hook-only mint/burn permissions.
 
 ### `ILMath`, `PremiumMath`, `InsuranceVault`, and `YieldAccounting`
 
-Phase 2 support modules for impermanent-loss quotes, premium estimates, reserve-capped payouts, and YT fee accrual.
+Support modules for impermanent-loss quotes, premium estimates, USDC-backed insurance payouts, and YT fee accrual.
 
 ### `VolatilityOracle`
 
@@ -141,7 +141,9 @@ Optional deployment variables:
 NEXT_PUBLIC_STRUCTURED_YIELD_HOOK=0x7d68F662E056706476A04AD9CFca3740CaaeDb40
 NEXT_PUBLIC_SY_ROUTER=0x6bd6903B652a2E37Fc189e7b3a1DEa2d6Bb77D63
 NEXT_PUBLIC_SY_LENS=0x6866ba266A127c13a2A6DD5877f7F229a75886c9
+NEXT_PUBLIC_INSURANCE_VAULT=0xe948E1EbEa6bff1cA9ED2b4552D2AA3463bc1f5D
 NEXT_PUBLIC_CHAIN_ID=1301
+NEXT_PUBLIC_SUBGRAPH_URL=
 ```
 
 Without deployed addresses, the UI falls back to demo data so the dashboard remains explorable.
@@ -192,7 +194,7 @@ Network details:
 
 Current verified deployment:
 
-> Note: these addresses are the live Unichain Sepolia demo deployment. The latest local contract changes, including pending-fee lens reads and active-position overwrite protection, require a redeploy before they are reflected on-chain.
+> Note: these addresses are the live Unichain Sepolia demo deployment. The latest local contract changes, including real USDC vault custody, YT transfer disabling, maturity-bound pool initialization, and live vault reads, require a redeploy before they are reflected on-chain.
 
 | Contract | Address |
 |---|---|
@@ -284,6 +286,18 @@ forge script script/TriggerTestSwap.s.sol \
   -vvvv
 ```
 
+Fund the insurance vault with real Unichain Sepolia USDC after deployment:
+
+```bash
+INSURANCE_VAULT=<deployed_vault_address> \
+POOL_ID=<pool_id> \
+FUND_AMOUNT_USDC=10000000 \
+forge script script/FundVault.s.sol \
+  --rpc-url unichain_sepolia \
+  --broadcast \
+  -vvvv
+```
+
 Create a scaffold pool after deployment, only if you are running the old dependency-light demo path:
 
 ```bash
@@ -312,8 +326,10 @@ NEXT_PUBLIC_STRUCTURED_YIELD_HOOK=0x7d68F662E056706476A04AD9CFca3740CaaeDb40
 NEXT_PUBLIC_V4_HOOK_ADDRESS=0x7d68F662E056706476A04AD9CFca3740CaaeDb40
 NEXT_PUBLIC_SY_ROUTER=0x6bd6903B652a2E37Fc189e7b3a1DEa2d6Bb77D63
 NEXT_PUBLIC_SY_LENS=0x6866ba266A127c13a2A6DD5877f7F229a75886c9
+NEXT_PUBLIC_INSURANCE_VAULT=0xe948E1EbEa6bff1cA9ED2b4552D2AA3463bc1f5D
 NEXT_PUBLIC_REAL_POOL_ID=0x92b0899e642ee283b7673bfb931c1e44bb7c2a00c18cc1862d11d743dd8849e4
 NEXT_PUBLIC_CHAIN_ID=1301
+NEXT_PUBLIC_SUBGRAPH_URL=
 ```
 
 Manual real V4 demo flow:
@@ -339,7 +355,7 @@ RfH alignment for UHI9 — Impermanent Loss & Yield Systems:
 
 | RfH Category | StructuredYield Implementation | Status |
 |---|---|---|
-| IL Insurance Hooks | `InsuranceVault` reserve accounting plus maturity-time `beforeRemoveLiquidity` IL coverage | Live on Unichain Sepolia |
+| IL Insurance Hooks | `InsuranceVault` accounting plus real USDC custody, solvency reads, and maturity-time IL coverage | Local code complete; requires latest redeploy/funding |
 | YieldBasis-Style Fixed Income | PT-LP principal token and YT-LP fee-stream token around a V4 LP position | Live on Unichain Sepolia |
 | Fee-Smoothing Hooks | `afterSwap` routes fees through a Q128 fee index without per-holder loops | Verified in live swap tx |
 | Delta-Neutral Hooks | Not implemented | Out of scope |
@@ -411,11 +427,12 @@ Current local scan completed with no Critical/High-labeled findings in the outpu
 
 ## Roadmap
 
+- Redeploy the latest contracts so Unichain Sepolia includes real USDC vault custody, disabled YT transfers, and maturity-bound pool setup.
+- Fund the deployed `InsuranceVault` with Unichain Sepolia USDC via `script/FundVault.s.sol`.
 - Deploy the subgraph and set `NEXT_PUBLIC_SUBGRAPH_URL` so fee charts use indexed live events instead of demo fallback data.
-- Replace demo liquidity sizing with exact V4 token-delta math and slippage controls before production use.
-- Add real token custody and guarded transfers to `InsuranceVault.fund()` and `InsuranceVault.payout()`.
+- Replace approximate frontend liquidity sizing with exact V4 token-delta math before production use.
 - Re-run Slither, gas snapshots, and fork tests before any new deployed build is submitted.
 
 ## Notes
 
-The current code keeps scaffold mode for demos while adding a production `PoolManager` path for real V4 liquidity and swaps. Real token custody in `InsuranceVault` remains a mainnet-hardening task.
+The current code keeps scaffold mode for demos while adding a production `PoolManager` path for real V4 liquidity and swaps. `InsuranceVault` now supports real USDC custody and guarded payouts, but the live testnet vault must be redeployed and funded before judges can verify that path on-chain.

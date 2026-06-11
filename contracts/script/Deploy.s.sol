@@ -24,6 +24,7 @@ contract Deploy is Script {
         console2.log("StructuredYieldHook:", address(hook));
         console2.log("SYRouter:", address(router));
         console2.log("SYLens:", address(lens));
+        console2.log("InsuranceVault:", address(hook.insuranceVault()));
         console2.log("PoolManager:", UNICHAIN_SEPOLIA_POOL_MANAGER);
         console2.log("Scaffold mode:", scaffoldMode);
 

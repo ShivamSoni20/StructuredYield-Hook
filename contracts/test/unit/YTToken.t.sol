@@ -29,5 +29,16 @@ contract YTTokenTest is Test {
         vm.expectRevert();
         token.mint(lp, 1 ether);
     }
-}
 
+    function testTransfersAreDisabled() public {
+        vm.prank(hook);
+        token.mint(lp, 90 ether);
+
+        vm.startPrank(lp);
+        vm.expectRevert();
+        token.transfer(address(0xB0B), 1 ether);
+        vm.expectRevert();
+        token.transferFrom(lp, address(0xB0B), 1 ether);
+        vm.stopPrank();
+    }
+}

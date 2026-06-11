@@ -20,7 +20,7 @@ contract SYRouterTest is Test {
     }
 
     function testDepositAndMintUsesSenderAsLP() public {
-        (address ptToken,) = router.initializePool(poolId, block.timestamp + 30 days);
+        (address ptToken,) = hook.initializePool(poolId, block.timestamp + 30 days);
 
         vm.prank(lp);
         router.depositAndMint(poolId, 1_000 ether, sqrtPrice);
@@ -29,7 +29,7 @@ contract SYRouterTest is Test {
     }
 
     function testClaimFeesUsesSenderAsLP() public {
-        router.initializePool(poolId, block.timestamp + 30 days);
+        hook.initializePool(poolId, block.timestamp + 30 days);
 
         vm.prank(lp);
         router.depositAndMint(poolId, 1_000 ether, sqrtPrice);

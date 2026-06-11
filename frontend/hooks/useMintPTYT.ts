@@ -14,8 +14,19 @@ import {
 import { parseDepositAmount } from "@/lib/math";
 import { usePoolState } from "@/hooks/usePoolState";
 
-export function computeLiquidityDelta(depositValue: bigint) {
-  return depositValue > 0n ? depositValue : 1_000_000n;
+const Q96 = 2n ** 96n;
+
+export function computeLiquidityDelta(depositValueUsdc: bigint, sqrtPriceX96: bigint) {
+  if (depositValueUsdc === 0n || sqrtPriceX96 === 0n) return 1_000_000n;
+
+  const normalizedAmount = depositValueUsdc * 10n ** 12n;
+  const rawLiquidity = (normalizedAmount * sqrtPriceX96) / Q96;
+  const MIN_LIQUIDITY = 1_000_000n;
+  const MAX_LIQUIDITY = 1_000_000_000_000_000n;
+
+  if (rawLiquidity < MIN_LIQUIDITY) return MIN_LIQUIDITY;
+  if (rawLiquidity > MAX_LIQUIDITY) return MAX_LIQUIDITY;
+  return rawLiquidity;
 }
 
 export function useMintPTYT() {
@@ -30,8 +41,8 @@ export function useMintPTYT() {
     const depositValue = parseDepositAmount(amount, USE_REAL_V4 ? 6 : 18);
 
     if (USE_REAL_V4) {
-      const liquidityDelta = computeLiquidityDelta(depositValue);
       const liveSqrtPrice = slot0.data?.[0] ?? DEFAULT_SQRT_PRICE;
+      const liquidityDelta = computeLiquidityDelta(depositValue, liveSqrtPrice);
       writeContract({
         ...SY_ROUTER,
         functionName: "addLiquidityToPool",

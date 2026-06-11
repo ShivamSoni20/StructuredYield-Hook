@@ -37,12 +37,12 @@ abstract contract HookMintableERC20 {
         return true;
     }
 
-    function transfer(address to, uint256 amount) external returns (bool) {
+    function transfer(address to, uint256 amount) external virtual returns (bool) {
         _transfer(msg.sender, to, amount);
         return true;
     }
 
-    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
+    function transferFrom(address from, address to, uint256 amount) external virtual returns (bool) {
         uint256 currentAllowance = allowance[from][msg.sender];
         if (currentAllowance < amount) revert InsufficientAllowance();
 
@@ -87,4 +87,3 @@ abstract contract HookMintableERC20 {
         emit Transfer(from, to, amount);
     }
 }
-

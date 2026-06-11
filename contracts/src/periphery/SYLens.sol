@@ -45,7 +45,7 @@ contract SYLens {
             uint256 maturityTimestamp,
             address ptToken,
             address ytToken,
-            uint256 insuranceReserve,
+            ,
             ,
             ,
             bool initialized
@@ -59,6 +59,7 @@ contract SYLens {
         uint256 elapsed = block.timestamp > depositTimestamp ? block.timestamp - depositTimestamp : 1;
         uint256 claimedAndCovered = feesClaimed + ilCovered;
         uint256 pendingFees = hook.yieldAccounting().quoteClaimableFees(poolId, lp, ytBalance);
+        bool vaultSolvent = hook.insuranceVault().isSolvent(poolId, currentILAmount);
 
         view_ = PositionView({
             ptBalance: ptBalance,
@@ -68,7 +69,7 @@ contract SYLens {
             currentILAmount: currentILAmount,
             accruedFees: pendingFees,
             secondsToMaturity: block.timestamp >= maturityTimestamp ? 0 : maturityTimestamp - block.timestamp,
-            isVaultSolvent: insuranceReserve >= currentILAmount,
+            isVaultSolvent: vaultSolvent,
             estimatedFixedAPY: ptMinted == 0 ? 0 : (claimedAndCovered * 365 days * 10_000) / (ptMinted * elapsed),
             active: active
         });

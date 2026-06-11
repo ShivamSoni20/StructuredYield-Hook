@@ -24,7 +24,7 @@ contract FullFlowTest is Test {
 
     function testDepositSwapMatureRedeemFlow() public {
         uint256 maturity = block.timestamp + 90 days;
-        (address ptToken, address ytToken) = router.initializePool(poolId, maturity);
+        (address ptToken, address ytToken) = hook.initializePool(poolId, maturity);
 
         vm.prank(lp);
         router.depositAndMint(poolId, 50_000 ether, sqrtPrice);

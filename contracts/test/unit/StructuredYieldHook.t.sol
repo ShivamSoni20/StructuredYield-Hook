@@ -5,14 +5,18 @@ import {Test} from "forge-std/Test.sol";
 import {StructuredYieldHook} from "../../src/StructuredYieldHook.sol";
 import {PTToken} from "../../src/tokens/PTToken.sol";
 import {YTToken} from "../../src/tokens/YTToken.sol";
+import {MockERC20} from "../mocks/MockERC20.sol";
 
 contract StructuredYieldHookTest is Test {
     StructuredYieldHook private hook;
+    address private constant USDC = 0x31d0220469e10c4E71834a79b1f276d740d3768F;
     bytes32 private poolId = keccak256("ETH-USDC-3000");
     address private lp = address(0xCAFE);
     uint160 private sqrtPrice = 79228162514264337593543950336;
 
     function setUp() public {
+        MockERC20 mock = new MockERC20();
+        vm.etch(USDC, address(mock).code);
         hook = new StructuredYieldHook();
     }
 
@@ -96,7 +100,7 @@ contract StructuredYieldHookTest is Test {
         uint256 maturity = block.timestamp + 90 days;
         hook.initializePool(poolId, maturity);
         hook.beforeAddLiquidity(poolId, lp, 10_000 ether, sqrtPrice);
-        hook.fundInsuranceReserve(poolId, 3_000 ether);
+        _fundVaultWithTokens(3_000 ether);
 
         uint160 doubledSqrtPrice = sqrtPrice * 2;
         (uint256 ilAmount, uint256 ilBps) = hook.quoteIL(poolId, lp, doubledSqrtPrice);
@@ -110,5 +114,12 @@ contract StructuredYieldHookTest is Test {
         assertTrue(active);
         assertEq(ilCovered, 2_000 ether);
         assertEq(hook.insuranceVault().reserves(poolId), 1_000 ether);
+    }
+
+    function _fundVaultWithTokens(uint256 amount) internal {
+        MockERC20 token = MockERC20(USDC);
+        token.mint(address(this), amount);
+        token.approve(address(hook.insuranceVault()), amount);
+        hook.insuranceVault().fundWithTokens(poolId, amount);
     }
 }

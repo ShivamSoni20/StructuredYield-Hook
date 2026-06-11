@@ -80,7 +80,7 @@ export default function PositionDetailPage() {
             </div>
 
             <aside className="space-y-6">
-              <VaultSolvencyCard reserve={position.currentILAmount * 2n} liability={position.currentILAmount} isSolvent={position.isVaultSolvent} />
+              <VaultSolvencyCard poolId={poolId} liability={position.currentILAmount} isSolvent={position.isVaultSolvent} />
               <section className="rounded-2xl border border-white/10 bg-[#111318] p-6">
                 <h2 className="font-semibold text-white">Actions</h2>
                 <div className="mt-5 space-y-3">

@@ -231,3 +231,50 @@ export const SY_LENS = {
     }
   ]
 } as const;
+
+export const INSURANCE_VAULT = {
+  address: (process.env.NEXT_PUBLIC_INSURANCE_VAULT || ZERO_ADDRESS) as `0x${string}`,
+  abi: [
+    {
+      type: "function",
+      name: "reserves",
+      stateMutability: "view",
+      inputs: [{ name: "poolId", type: "bytes32" }],
+      outputs: [{ name: "", type: "uint256" }]
+    },
+    {
+      type: "function",
+      name: "tokenReserves",
+      stateMutability: "view",
+      inputs: [{ name: "poolId", type: "bytes32" }],
+      outputs: [{ name: "", type: "uint256" }]
+    },
+    {
+      type: "function",
+      name: "isSolvent",
+      stateMutability: "view",
+      inputs: [
+        { name: "poolId", type: "bytes32" },
+        { name: "liability", type: "uint256" }
+      ],
+      outputs: [{ name: "", type: "bool" }]
+    },
+    {
+      type: "function",
+      name: "realSolvency",
+      stateMutability: "view",
+      inputs: [{ name: "poolId", type: "bytes32" }],
+      outputs: [{ name: "realBacking", type: "uint256" }]
+    },
+    {
+      type: "function",
+      name: "fundWithTokens",
+      stateMutability: "nonpayable",
+      inputs: [
+        { name: "poolId", type: "bytes32" },
+        { name: "amount", type: "uint256" }
+      ],
+      outputs: []
+    }
+  ]
+} as const;

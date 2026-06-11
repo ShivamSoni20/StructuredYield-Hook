@@ -13,6 +13,10 @@ contract StructuredYieldHook {
     uint256 public constant YT_FEE_SHARE_BPS = 8_000;
     uint256 public constant INSURANCE_FEE_SHARE_BPS = 2_000;
     uint256 public constant BPS = 10_000;
+    uint256 public constant MIN_MATURITY_DURATION = 1 days;
+    uint256 public constant MAX_MATURITY_DURATION = 730 days;
+    address public constant UNICHAIN_SEPOLIA_USDC = 0x31d0220469e10c4E71834a79b1f276d740d3768F;
+    address public constant UNICHAIN_SEPOLIA_POOL_MANAGER = 0x00B036B58a818B1BC34d502D3fE730Db729e62AC;
     bytes4 public constant AFTER_SWAP_SELECTOR = bytes4(keccak256("afterSwap(bytes32,uint256,uint160)"));
 
     struct PoolConfig {
@@ -62,7 +66,7 @@ contract StructuredYieldHook {
 
     constructor() {
         owner = msg.sender;
-        insuranceVault = new InsuranceVault(address(this));
+        insuranceVault = new InsuranceVault(address(this), UNICHAIN_SEPOLIA_USDC);
         volatilityOracle = new VolatilityOracle(address(this));
         yieldAccounting = new YieldAccounting(address(this));
     }
@@ -73,8 +77,12 @@ contract StructuredYieldHook {
     }
 
     function initializePool(bytes32 poolId, uint256 maturityTimestamp) public returns (address ptToken, address ytToken) {
+        if (msg.sender != address(this) && msg.sender != owner && msg.sender != UNICHAIN_SEPOLIA_POOL_MANAGER) {
+            revert NotOwner();
+        }
         if (pools[poolId].initialized) revert PoolAlreadyInitialized();
-        if (maturityTimestamp <= block.timestamp) revert InvalidMaturity();
+        uint256 duration = maturityTimestamp > block.timestamp ? maturityTimestamp - block.timestamp : 0;
+        if (duration < MIN_MATURITY_DURATION || duration > MAX_MATURITY_DURATION) revert InvalidMaturity();
 
         PTToken pt = new PTToken(address(this));
         YTToken yt = new YTToken(address(this));
