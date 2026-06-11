@@ -97,16 +97,6 @@ Primary demo chain: Unichain Sepolia
 
 The pool has been initialized on Unichain Sepolia and a real swap has been processed to prove fee routing.
 
-## What Judges Should Verify
-- Hook address is deployed and callbacks are active.
-- Pool is initialized through the real Unichain Sepolia PoolManager.
-- Senior protected liquidity can be opened through `SYRouter.addLiquidityToPool`.
-- A v4 swap executes through the `SYRouter.swapExactInputSingle`.
-- Swap fees are routed to the `YieldAccounting` contract and `InsuranceVault` via `afterSwap`.
-- `InsuranceVault` holds real USDC backing via `fundWithTokens`.
-- The frontend reads live Unichain Sepolia metrics (Pool state, Vault solvency, Positions).
-- Tests pass locally, proving IL coverage and fee routing math.
-
 ## Security Model
 - Hook callbacks are gated where necessary.
 - `SYRouter` acts as a safe periphery for the complex V4 `unlock` flows.
@@ -148,14 +138,3 @@ To fund the insurance vault with real USDC for IL coverage testing:
 forge script script/FundVault.s.sol --rpc-url unichain_sepolia --broadcast
 ```
 
-## Progress Updates
-**Phase 1-3:**
-- Core Hook, PT/YT tokens, and Yield Accounting built.
-- Periphery Router and Lens built.
-- 35 Foundry tests passing covering full lifecycle, IL math, and fee routing.
-
-**Phase 4 (Final Submission):**
-- Real V4 Hook integration completed.
-- Full Next.js frontend built with WalletConnect, live V4 pool reads, and actual swap/deposit execution.
-- `InsuranceVault` upgraded to hold real USDC custody.
-- Deployed and verified on Unichain Sepolia.
