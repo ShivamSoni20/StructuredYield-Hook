@@ -38,37 +38,44 @@ Uniswap v4 hooks can run around pool lifecycle events. StructuredYield uses this
 
 ## Architecture
 
-```text
-Trader swap
-   |
-   v
-SYRouter.swapExactInputSingle
-   - handles the V4 unlock callback
-   - executes PoolManager.swap
-   |
-   v
-StructuredYieldV4Hook.afterSwap
-   - calculates the 80/20 fee split
-   - credits YT fee buffer
-   - credits Insurance Reserve
-   |
-   v
-YieldAccounting & InsuranceVault
-   - YT holders accrue claimable fees
-   - Vault accrues IL coverage capacity
+```mermaid
+flowchart TD
+    Trader[Trader Swap] --> Router[SYRouter.swapExactInputSingle]
+    Router --> |Unlocks & Swaps| PoolManager[Uniswap V4 PoolManager]
+    PoolManager --> |afterSwap Callback| Hook[StructuredYieldV4Hook]
+    
+    Hook --> |80% Fee Route| YT[YieldAccounting]
+    YT --> |Claimable Fees| YTHolder[YT-LP Holders]
+    
+    Hook --> |20% Fee Route| Vault[InsuranceVault]
+    Vault --> |IL Coverage Capacity| PTLP[PT-LP Holders]
 ```
 
-## Loading
-Contracts are organized cleanly into functional areas:
+## File Structure
+The project is split into a Foundry smart contract workspace and a Next.js frontend:
 
-- `StructuredYieldHook.sol`: Core hook logic, pool initialization, and V4 callbacks.
-- `StructuredYieldV4Hook.sol`: The actual Uniswap V4 `IHooks` adapter.
-- `vault/InsuranceVault.sol`: Holds real ERC-20 reserve tokens to cover LP IL.
-- `periphery/SYRouter.sol`: Demo router for real PoolManager initialize, liquidity, swap, and claim flows.
-- `periphery/SYLens.sol`: Read-only aggregator for the frontend to fetch position states.
-- `tokens/PTToken.sol` & `YTToken.sol`: The principal and yield tokens.
-- `accounting/YieldAccounting.sol`: O(1) cumulative fee index for YT holders.
-- `math/ILMath.sol` & `PremiumMath.sol`: Pure math for IL and premiums.
+```text
+📦 StructuredYield-Hook
+ ┣ 📂 contracts
+ ┃ ┣ 📂 script          # Foundry deployment & funding scripts
+ ┃ ┣ 📂 src
+ ┃ ┃ ┣ 📂 accounting    # Yield cumulative fee logic
+ ┃ ┃ ┣ 📂 math          # IL math and premium calculations
+ ┃ ┃ ┣ 📂 periphery     # SYRouter and SYLens
+ ┃ ┃ ┣ 📂 tokens        # PTToken and YTToken ERC20s
+ ┃ ┃ ┣ 📂 vault         # InsuranceVault for USDC custody
+ ┃ ┃ ┣ 📜 StructuredYieldHook.sol
+ ┃ ┃ ┗ 📜 StructuredYieldV4Hook.sol
+ ┃ ┗ 📂 test            # Foundry unit and integration tests
+ ┗ 📂 frontend
+   ┣ 📂 app
+   ┃ ┣ 📂 dashboard     # LP Portfolio overview
+   ┃ ┣ 📂 markets       # Available pools
+   ┃ ┗ 📂 positions     # Position details & redemption
+   ┣ 📂 components      # UI React components
+   ┣ 📂 hooks           # Wagmi contract read/write hooks
+   ┗ 📂 lib             # ABIs, math utils, addresses
+```
 
 ## MVP Flow
 1. Alice adds liquidity through the `SYRouter`. She is minted PT-LP and YT-LP tokens.
