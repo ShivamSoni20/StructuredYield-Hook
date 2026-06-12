@@ -68,6 +68,20 @@ In v3, LP fees accrue directly into the position's liquidity. You cannot interce
 
 ---
 
+## 🎯 Alignment with UHI9 Theme
+
+StructuredYield directly addresses the UHI9 Hookathon theme: **"Impermanent Loss & Yield Systems."**
+
+The protocol combines:
+- **Impermanent Loss Protection** through an Insurance Reserve
+- **Fixed-Income Style LP Positions** via PT-LP
+- **Yield Separation** via YT-LP
+- **Sustainable Fee-Based Protection** funded by real swap activity
+
+By transforming LP positions into principal and yield tranches, StructuredYield creates a yield-protected liquidity system aligned with the core objectives of the UHI9 Hookathon.
+
+---
+
 ## 🧪 Proof of Functionality
 
 Our hook is not just a concept; it is fully functional on testnet:
