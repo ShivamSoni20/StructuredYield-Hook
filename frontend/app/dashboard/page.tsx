@@ -1,14 +1,12 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { DepositModal } from "@/components/DepositModal";
-import { FeeChart } from "@/components/FeeChart";
 import { LiveV4Panel } from "@/components/LiveV4Panel";
 import { MaturityTimeline } from "@/components/MaturityTimeline";
-import { MetricsGrid } from "@/components/MetricsGrid";
 import { PositionTable } from "@/components/PositionTable";
 import { WalletRouteGuard } from "@/components/WalletRouteGuard";
 import { YieldMeters } from "@/components/YieldMeters";
@@ -133,16 +131,14 @@ export default function DashboardPage() {
 function PortfolioContent() {
   return (
     <div className="space-y-6">
-      <MetricsGrid />
       <LiveV4Panel />
-      <div className="grid gap-6 xl:grid-cols-[1.45fr_0.9fr]">
-        <FeeChart />
+      <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+        <YieldMeters />
         <section className="rounded-2xl border border-white/10 bg-[#111318] p-6">
           <h2 className="mb-6 font-semibold text-white">Upcoming Maturities</h2>
           <MaturityTimeline />
         </section>
       </div>
-      <YieldMeters />
       <PositionTable />
     </div>
   );
