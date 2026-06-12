@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { formatUnits } from "viem";
+import { useQueryClient } from "@tanstack/react-query";
 import { useMintPTYT } from "@/hooks/useMintPTYT";
 import { useTokenApproval } from "@/hooks/useTokenApproval";
 import { SY_ROUTER, USE_REAL_V4, USDC_ADDRESS, WETH_ADDRESS } from "@/lib/contracts";
@@ -18,6 +19,7 @@ type Props = {
 };
 
 export function DepositModal({ open, onClose, mode = "new-position", poolId, onSuccess }: Props) {
+  const queryClient = useQueryClient();
   const [amount, setAmount] = useState("");
   const [maturityDays, setMaturityDays] = useState("90");
   const [selectedPool, setSelectedPool] = useState<`0x${string}`>(poolId ?? DEMO_MARKETS[0].poolId);
@@ -35,8 +37,11 @@ export function DepositModal({ open, onClose, mode = "new-position", poolId, onS
   const premium = parsedAmount > 0n ? (parsedAmount * premiumBps) / 10_000n : 0n;
 
   useEffect(() => {
-    if (isSuccess) onSuccess?.();
-  }, [isSuccess, onSuccess]);
+    if (isSuccess) {
+      queryClient.invalidateQueries();
+      onSuccess?.();
+    }
+  }, [isSuccess, onSuccess, queryClient]);
 
   useEffect(() => {
     if (poolId) setSelectedPool(poolId);
