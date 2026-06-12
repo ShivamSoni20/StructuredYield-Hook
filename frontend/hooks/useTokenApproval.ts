@@ -17,7 +17,7 @@ export function useTokenApproval(token: `0x${string}`, amount: bigint) {
   });
   const { data: hash, error, isPending, writeContract } = useWriteContract();
   const receipt = useWaitForTransactionReceipt({ hash });
-  const approved = ((allowance.data as bigint | undefined) ?? 0n) >= amount;
+  const approved = ((allowance.data as bigint | undefined) ?? 0n) >= (amount * 100n);
 
   function approve() {
     writeContract({

@@ -12,7 +12,7 @@ contract Deploy is Script {
 
     function run() external returns (StructuredYieldHook hook, SYRouter router, SYLens lens) {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        bool scaffoldMode = vm.envOr("SCAFFOLD_MODE", true);
+        bool scaffoldMode = vm.envOr("SCAFFOLD_MODE", false);
         address existingHook = vm.envOr("STRUCTURED_YIELD_HOOK", address(0));
 
         vm.startBroadcast(deployerPrivateKey);

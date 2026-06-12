@@ -24,7 +24,7 @@ export function useRealV4Swap() {
   const { data: hash, error, isPending, writeContract } = useWriteContract();
   const receipt = useWaitForTransactionReceipt({ hash });
 
-  function swapExactInput(amountIn: bigint, zeroForOne = true) {
+  function swapExactInput(amountIn: bigint, zeroForOne = true, onError?: (msg: string) => void) {
     const liveSqrtPrice = slot0.data?.[0] ?? DEFAULT_SQRT_PRICE;
     const sqrtPriceLimit = getSqrtPriceLimit(liveSqrtPrice, zeroForOne);
     writeContract({
@@ -37,6 +37,16 @@ export function useRealV4Swap() {
         sqrtPriceLimit,
         liveSqrtPrice
       ]
+    }, {
+      onError: (err: any) => {
+        if (onError) {
+          if (err.message?.includes("transfer amount exceeds balance")) {
+            onError("ERC20: transfer amount exceeds balance. Please check your token balance.");
+          } else {
+            onError(err.shortMessage || err.message || "Wallet transaction failed or was rejected.");
+          }
+        }
+      }
     });
   }
 

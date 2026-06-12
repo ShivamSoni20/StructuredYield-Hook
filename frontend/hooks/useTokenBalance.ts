@@ -12,7 +12,7 @@ export function useTokenBalance(token: `0x${string}`) {
     args: [address ?? "0x0000000000000000000000000000000000000000"],
     query: {
       enabled: isConnected,
-      refetchInterval: 15_000
+      refetchInterval: 10_000
     }
   });
 }

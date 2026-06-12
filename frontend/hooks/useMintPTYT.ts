@@ -19,9 +19,8 @@ const Q96 = 2n ** 96n;
 export function computeLiquidityDelta(depositValueUsdc: bigint, sqrtPriceX96: bigint) {
   if (depositValueUsdc === 0n || sqrtPriceX96 === 0n) return 1_000_000n;
 
-  const normalizedAmount = depositValueUsdc * 10n ** 12n;
-  const rawLiquidity = (normalizedAmount * sqrtPriceX96) / Q96;
-  const MIN_LIQUIDITY = 1_000_000n;
+  const rawLiquidity = (depositValueUsdc * sqrtPriceX96) / Q96;
+  const MIN_LIQUIDITY = 1_000n;
   const MAX_LIQUIDITY = 1_000_000_000_000_000n;
 
   if (rawLiquidity < MIN_LIQUIDITY) return MIN_LIQUIDITY;

@@ -11,12 +11,30 @@ import { parseDepositAmount } from "@/lib/math";
 
 export function LiveV4Panel() {
   const [swapAmount, setSwapAmount] = useState("0.01");
+  const [swapError, setSwapError] = useState<string | null>(null);
   const amountIn = useMemo(() => parseDepositAmount(swapAmount, 6), [swapAmount]);
   const pool = usePoolState(DEFAULT_POOL_ID);
   const usdcBalance = useTokenBalance(USDC_ADDRESS);
   const wethBalance = useTokenBalance(WETH_ADDRESS);
   const usdcApproval = useTokenApproval(USDC_ADDRESS, amountIn);
   const swap = useRealV4Swap();
+
+  const handleSwap = () => {
+    setSwapError(null);
+    const currentUsdcBalance = (usdcBalance.data as bigint | undefined) ?? 0n;
+    
+    if (currentUsdcBalance < amountIn) {
+      setSwapError(`Insufficient USDC balance. Need ${swapAmount} USDC, wallet has ${formatUnits(currentUsdcBalance, 6)} USDC.`);
+      return;
+    }
+    
+    if (!usdcApproval.approved) {
+      setSwapError("USDC not approved. Click Approve USDC first.");
+      return;
+    }
+    
+    swap.swapExactInput(amountIn, true, (msg) => setSwapError(msg));
+  };
 
   const slot0 = pool.slot0.data as readonly [bigint, number, number, number] | undefined;
   const liquidity = (pool.liquidity.data as bigint | undefined) ?? 0n;
@@ -56,6 +74,32 @@ export function LiveV4Panel() {
             <Row label="WETH" value={formatUnits((wethBalance.data as bigint | undefined) ?? 0n, 18)} />
             <Row label="Router" value={`${SY_ROUTER.address.slice(0, 6)}...${SY_ROUTER.address.slice(-4)}`} />
           </dl>
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <p className="text-xs text-zinc-500 mb-2">Need testnet WETH for adding liquidity?</p>
+            <button 
+              onClick={async () => {
+                if (typeof window !== "undefined" && window.ethereum) {
+                  try {
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    await window.ethereum.request({
+                      method: 'eth_sendTransaction',
+                      params: [{
+                        from: accounts[0],
+                        to: WETH_ADDRESS,
+                        data: "0xd0e30db0", // deposit() selector
+                        value: "0x11C37937E08000" // 0.005 ETH
+                      }]
+                    });
+                  } catch (e) {
+                    console.error(e);
+                  }
+                }
+              }}
+              className="w-full rounded-lg bg-zinc-800 py-2 text-xs font-semibold text-white hover:bg-zinc-700"
+            >
+              Wrap 0.005 ETH to WETH
+            </button>
+          </div>
         </div>
 
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
@@ -82,10 +126,10 @@ export function LiveV4Panel() {
               <button
                 type="button"
                 disabled={amountIn === 0n || swap.isLoading}
-                onClick={() => swap.swapExactInput(amountIn, true)}
+                onClick={handleSwap}
                 className="min-h-11 rounded-xl bg-[#d4a853] px-4 font-semibold text-[#0a0b0d] hover:bg-[#f0c878] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {swap.isLoading ? "Swapping..." : "Swap USDC → WETH"}
+                {swap.isLoading ? "Swapping..." : `Swap ${swapAmount} USDC → WETH`}
               </button>
             )}
           </div>
@@ -103,7 +147,8 @@ export function LiveV4Panel() {
             </p>
           ) : null}
           {swap.isSuccess ? <p className="mt-2 text-xs font-semibold text-[#4ade80]">Swap confirmed. Fee routing updated on-chain.</p> : null}
-          {swap.error || usdcApproval.error ? <p className="mt-2 text-xs text-[#f87171]">Wallet transaction failed or was rejected.</p> : null}
+          {swapError ? <p className="mt-2 text-xs text-[#f87171]">{swapError}</p> : null}
+          {!swapError && (swap.error || usdcApproval.error) ? <p className="mt-2 text-xs text-[#f87171]">Wallet transaction failed or was rejected.</p> : null}
         </div>
       </div>
     </section>

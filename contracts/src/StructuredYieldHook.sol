@@ -113,20 +113,27 @@ contract StructuredYieldHook {
         if (!pool.initialized) revert PoolNotInitialized();
         if (depositValue == 0) revert InvalidDepositValue();
         if (block.timestamp >= pool.maturityTimestamp) revert PositionMatured();
-        if (positions[poolId][lp].active) revert PositionAlreadyActive();
 
         uint256 ytAmount = _computeYTAmount(depositValue, pool.maturityTimestamp);
 
-        positions[poolId][lp] = LPPosition({
-            depositedValue: depositValue,
-            referenceSqrtPrice: referenceSqrtPrice,
-            ptMinted: depositValue,
-            ytMinted: ytAmount,
-            depositTimestamp: block.timestamp,
-            ilCovered: 0,
-            feesClaimed: 0,
-            active: true
-        });
+        LPPosition storage pos = positions[poolId][lp];
+        if (pos.active) {
+            pos.depositedValue += depositValue;
+            pos.ptMinted += depositValue;
+            pos.ytMinted += ytAmount;
+            pos.referenceSqrtPrice = referenceSqrtPrice; // Update to latest price for IL tracking
+        } else {
+            positions[poolId][lp] = LPPosition({
+                depositedValue: depositValue,
+                referenceSqrtPrice: referenceSqrtPrice,
+                ptMinted: depositValue,
+                ytMinted: ytAmount,
+                depositTimestamp: block.timestamp,
+                ilCovered: 0,
+                feesClaimed: 0,
+                active: true
+            });
+        }
 
         PTToken(pool.ptToken).mint(lp, depositValue);
         YTToken(pool.ytToken).mint(lp, ytAmount);
